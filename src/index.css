@@ -1,0 +1,571 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* ------------------------------------------------------------------
+   Design tokens — the single source of truth for colour, type & motion
+   ------------------------------------------------------------------ */
+@theme {
+  /* System UI font first (San Francisco on Apple devices, Segoe UI on Windows); Inter, loaded from
+     Google Fonts in index.html, covers platforms without either (Android, Linux), then Arial.
+     Headings, body text and UI controls all use this one stack. */
+  --font-sans: -apple-system, "Segoe UI", Inter, Arial, sans-serif;
+  /* Headings use the same family; hierarchy comes from weight, size and tracking. */
+  --font-display: var(--font-sans);
+
+  /* Primary — teal */
+  --color-brand-50: #eef9f7;
+  --color-brand-100: #d5f0eb;
+  --color-brand-200: #abe0d6;
+  --color-brand-300: #74c9b9;
+  --color-brand-400: #3fae9b;
+  --color-brand-500: #1f9a87;
+  /* 600/400 tuned for WCAG AA: white on brand-600 = 5.2:1, ink-400 on sand-50 = 4.65:1 */
+  --color-brand-600: #117a6b;
+  --color-brand-700: #0e675b;
+  --color-brand-800: #0b5249;
+  --color-brand-900: #09433c;
+
+  /* Ink — navy text & dark surfaces */
+  --color-ink-50: #f3f6f9;
+  --color-ink-100: #e3e9ef;
+  --color-ink-200: #c6d2dd;
+  --color-ink-300: #9fb1c1;
+  --color-ink-400: #5d7387;
+  --color-ink-500: #546d82;
+  --color-ink-600: #3c556b;
+  --color-ink-700: #28465f;
+  --color-ink-800: #153450;
+  --color-ink-900: #0f2238;
+  --color-ink-950: #091829;
+
+  /* Accents */
+  --color-gold-100: #fdf3d6;
+  --color-gold-300: #f8dc8a;
+  --color-gold-400: #f5d063;
+  --color-gold-500: #e9b93a;
+  --color-coral-50: #fdefee;
+  --color-coral-100: #fadbd9;
+  --color-coral-500: #db403c;
+  --color-coral-600: #bf3330;
+
+  /* Neutral warm surface */
+  --color-sand-50: #f8f9f5;
+  --color-sand-100: #f0f2ec;
+  --color-sand-200: #e3e7df;
+
+  --shadow-card: 0 1px 2px rgb(15 34 56 / 0.04), 0 4px 16px -4px rgb(15 34 56 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(15 34 56 / 0.04), 0 18px 40px -12px rgb(15 34 56 / 0.18);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-fade-up: fade-up 0.7s var(--ease-out-soft) both;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 1.2s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  --animate-page-in: page-in 0.5s ease-out both;
+
+  @keyframes page-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+}
+
+/* ------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------ */
+/* Page scrollbar in the brand colours. CSS only, so scrolling stays native; touch screens keep their own overlay bars.
+   Chromium, Edge and Safari use the ::-webkit rules; Firefox only supports colour and width. */
+@media (hover: hover) and (pointer: fine) {
+  @supports not selector(::-webkit-scrollbar) {
+    html { scrollbar-width: thin; scrollbar-color: var(--color-brand-500) var(--color-sand-100); }
+  }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: var(--color-sand-100); }
+  ::-webkit-scrollbar-thumb {
+    min-height: 48px;
+    border: 2px solid var(--color-sand-100);
+    border-radius: 999px;
+    background: var(--color-brand-500);
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-brand-600); background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:active { background: var(--color-brand-700); background-clip: padding-box; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply min-w-80 bg-sand-50 font-sans text-[15px] leading-relaxed text-ink-700 antialiased sm:text-base;
+    /* Sideways reveal offsets must never create a horizontal scrollbar; `clip` keeps sticky working */
+    overflow-x: clip;
+  }
+  /* Font-weight scale (Segoe UI / San Francisco both have true 400, 600 and 700 cuts):
+       700 Bold      page & section display headings (h1, h2, .heading-display)
+       600 Semibold  sub-headings (h3-h6, card titles), strong text, small uppercase labels
+       500 Medium    interactive UI: buttons, nav links, chips, badges, field labels
+       400 Regular   body copy, descriptions, list items, footer links
+     Light (300) is deliberately unused: thin strokes hurt readability at body sizes.
+     Tailwind's reset makes headings inherit 400, so un-classed headings get their weight here;
+     a font-* utility on an element still wins. */
+  body { font-weight: 400; }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-ink-900;
+    text-wrap: balance;
+    /* Long single words from WordPress (e.g. "Thiruvananthapuram") wrap instead of spilling out of cards */
+    overflow-wrap: break-word;
+  }
+  h1, h2 { font-weight: 700; }
+  h3, h4, h5, h6 { font-weight: 600; }
+  strong, b { font-weight: 600; }
+  p { text-wrap: pretty; }
+  ::selection { @apply bg-brand-100 text-ink-900; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-600; }
+  button { cursor: pointer; }
+  /* Keep anchor targets clear of the sticky header */
+  [id] { scroll-margin-top: 6rem; }
+
+  /* Reduced motion means less movement, not no feedback: keyframe animations (fade-ups, floats,
+     pings) and smooth scrolling stop, while ordinary hover/colour/opacity transitions stay.
+     Scroll reveals become plain fades (see [data-reveal] below). The hero keeps its opacity
+     cross-fade and autoplay progress bar, which are not movement; its zoom and sliding text are
+     switched off in HeroSlider.jsx. Kept in this layer so the class exemptions out-rank `*`. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+    .hero-fade-in { animation-duration: 900ms !important; }
+    .hero-progress { animation-duration: var(--hero-interval) !important; }
+    .apply-dialog { animation-name: apply-fade-in !important; animation-duration: 200ms !important; }
+    .apply-dialog[data-closing] { animation-name: apply-fade-out !important; animation-duration: 180ms !important; }
+  }
+}
+
+/* Hero slider: the incoming slide fades in over the outgoing one, and the active dot's bar fills
+   over the autoplay interval (--hero-interval, set by HeroSlider), paused together with its timer. */
+@keyframes hero-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes hero-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@layer components {
+  .hero-fade-in { animation: hero-fade-in 900ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .hero-progress { animation: hero-progress var(--hero-interval, 5s) linear both; }
+}
+
+/* ------------------------------------------------------------------
+   Layout & typographic utilities
+   ------------------------------------------------------------------ */
+@utility shell {
+  @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
+}
+
+@utility section-y {
+  @apply py-16 sm:py-20 lg:py-24;
+}
+
+/* Display heading with the brand-coloured accent: <h2 class="heading-display">Popular <em>Courses</em></h2> */
+@utility heading-display {
+  @apply font-display font-bold tracking-[-0.03em] text-ink-900;
+  & em { @apply text-brand-600 not-italic; }
+}
+
+@utility card {
+  @apply rounded-2xl border border-sand-200 bg-white shadow-card;
+}
+
+@utility eyebrow {
+  @apply inline-flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-brand-700 uppercase;
+}
+
+/* ------------------------------------------------------------------
+   Components
+   ------------------------------------------------------------------ */
+@layer components {
+  .btn {
+    @apply relative isolate inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 text-sm font-medium whitespace-nowrap transition-[translate,scale,box-shadow,background-color,border-color,color] duration-300 ease-(--ease-out-soft) select-none active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50;
+  }
+  /* Light sweep across the button on hover — a single transform, GPU-composited */
+  .btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.28) 50%, transparent 65%);
+    transform: translateX(-120%);
+  }
+  .btn:hover::after {
+    transform: translateX(120%);
+    transition: transform 0.75s var(--ease-out-soft);
+  }
+  .btn svg { @apply size-4 transition-transform duration-300 ease-(--ease-out-soft); }
+  .btn:hover svg { @apply translate-x-0.5 -translate-y-0.5; }
+
+  .btn-primary { @apply bg-brand-600 text-white shadow-[0_8px_20px_-8px_var(--color-brand-600)] hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-[0_14px_28px_-10px_var(--color-brand-600)]; }
+  .btn-dark { @apply bg-ink-900 text-white hover:-translate-y-0.5 hover:bg-ink-800 hover:shadow-lift; }
+  .btn-gold { @apply bg-gold-400 text-ink-900 hover:-translate-y-0.5 hover:bg-gold-300 hover:shadow-[0_14px_28px_-12px_var(--color-gold-500)]; }
+  .btn-light { @apply bg-white text-ink-900 hover:-translate-y-0.5 hover:shadow-lift; }
+  .btn-outline { @apply border border-ink-200 bg-white/60 text-ink-900 backdrop-blur hover:border-ink-900 hover:bg-white; }
+  .btn-ghost-light { @apply border border-white/25 text-white hover:border-white/60 hover:bg-white/10; }
+
+  .link-arrow {
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-ink-900 underline-offset-4 transition-colors hover:text-brand-700 hover:underline;
+  }
+  .link-arrow svg { @apply size-4 transition-transform duration-300 ease-(--ease-out-soft); }
+  .link-arrow:hover svg, .group:hover .link-arrow svg { @apply translate-x-0.5 -translate-y-0.5; }
+
+  .card-interactive {
+    @apply card relative isolate transition-[translate,box-shadow,border-color] duration-400 ease-(--ease-out-soft) hover:-translate-y-1 hover:border-brand-200 hover:shadow-lift active:translate-y-0;
+  }
+  /* Soft brand glow that follows the pointer (coordinates set by PageEffects) */
+  .card-interactive::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(22rem circle at var(--mx, 50%) var(--my, 0%), rgb(31 154 135 / 0.09), transparent 65%);
+    transition: opacity 0.4s ease;
+  }
+  .card-interactive:hover::before { opacity: 1; }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border border-sand-200 bg-white px-4 py-2 text-sm font-medium text-ink-600 transition-[background-color,border-color,color,scale] duration-200 hover:border-ink-300 hover:text-ink-900 active:scale-95;
+  }
+  .chip-active {
+    @apply border-ink-900 bg-ink-900 text-white hover:border-ink-900 hover:text-white;
+  }
+
+  .input-search {
+    @apply w-full rounded-full border border-sand-200 bg-white py-3.5 pr-5 pl-12 text-ink-900 shadow-card transition placeholder:text-ink-300 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 focus:outline-none;
+  }
+
+  /* Rich text coming from WordPress (content.rendered & ACF WYSIWYG fields) */
+  .wp-content {
+    @apply prose max-w-none prose-slate
+      prose-headings:font-display prose-headings:font-semibold prose-h1:font-bold prose-h2:font-bold prose-headings:text-ink-900
+      prose-p:text-ink-600 prose-li:text-ink-600 prose-li:marker:text-brand-500
+      prose-a:font-medium prose-a:text-brand-700 prose-a:decoration-brand-200 prose-a:underline-offset-4 hover:prose-a:decoration-brand-600
+      prose-strong:text-ink-900 prose-img:rounded-2xl
+      prose-table:block prose-table:overflow-x-auto prose-th:text-ink-900;
+  }
+
+  /* Long-form legal documents (LegalPage, on top of .wp-content): each numbered h2 section is
+     separated by a hairline, lists get even rhythm, and long URLs/emails wrap instead of overflowing. */
+  .legal-content {
+    @apply prose-h2:mt-12 prose-h2:mb-4 prose-h2:border-t prose-h2:border-sand-200 prose-h2:pt-10 prose-h2:text-xl
+      sm:prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-lg prose-ul:my-5 prose-ol:my-5 prose-li:my-1.5;
+    overflow-wrap: anywhere;
+    & > :first-child { margin-top: 0; }
+    & > :last-child { margin-bottom: 0; }
+    & > h2:first-child { padding-top: 0; border-top: 0; }
+    /* Pasted rich text wraps each list item in its own <p>; without this every item gets paragraph gaps. */
+    & li > p { margin-block: 0; }
+  }
+}
+
+/* ------------------------------------------------------------------
+   Scroll reveal — driven by <Reveal> (data-reveal / data-visible).
+   Only opacity + transform animate, so the work stays on the compositor.
+   Colour/shadow transitions are listed too (with no delay) so hover
+   styles on a revealed element still animate.
+   ------------------------------------------------------------------ */
+[data-reveal] {
+  --reveal-distance: 20px;
+  opacity: 0;
+  transition-property: opacity, transform, background-color, border-color, color, box-shadow;
+  transition-duration: 0.8s, 0.8s, 0.3s, 0.3s, 0.3s, 0.3s;
+  transition-timing-function: var(--ease-out-soft);
+  transition-delay: var(--reveal-delay, 0ms), var(--reveal-delay, 0ms), 0s, 0s, 0s, 0s;
+}
+@media (width >= 40rem) {
+  [data-reveal] { --reveal-distance: 32px; }
+}
+[data-reveal="up"] { transform: translate3d(0, var(--reveal-distance), 0); }
+[data-reveal="down"] { transform: translate3d(0, calc(var(--reveal-distance) * -1), 0); }
+[data-reveal="left"] { transform: translate3d(calc(var(--reveal-distance) * -1.5), 0, 0); }
+[data-reveal="right"] { transform: translate3d(calc(var(--reveal-distance) * 1.5), 0, 0); }
+[data-reveal="zoom"] { transform: scale(0.95); }
+
+/* Phones: sideways slides become a simple rise — less travel, nothing near the screen edge */
+@media (width < 48rem) {
+  [data-reveal="left"], [data-reveal="right"] { transform: translate3d(0, var(--reveal-distance), 0); }
+}
+
+[data-reveal][data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Reduced motion: sections still fade in, but nothing slides or scales. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    transform: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Fluent Forms embed (Contact page). Fluent Forms' own stylesheet is
+   loaded from WordPress; these rules only align its fields with the site
+   and are scoped to .ff-embed so no other form is affected.
+   ------------------------------------------------------------------ */
+.ff-embed .fluentform { font-family: inherit; color: var(--color-ink-700); }
+.ff-embed .fluentform .ff-el-group { margin-bottom: 1.25rem; }
+.ff-embed .fluentform .ff-el-input--label label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-ink-900);
+}
+.ff-embed .fluentform .ff-el-is-required.asterisk-right label::after { color: var(--color-brand-700); }
+.ff-embed .fluentform .ff-el-form-control {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 0.75rem;
+  background-color: var(--color-sand-50);
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--color-ink-900);
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+.ff-embed .fluentform textarea.ff-el-form-control { min-height: 8rem; resize: vertical; }
+.ff-embed .fluentform .ff-el-form-control::placeholder { color: var(--color-ink-300); }
+.ff-embed .fluentform .ff-el-form-control:focus {
+  outline: none;
+  border-color: var(--color-brand-600);
+  background-color: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-600) 18%, transparent);
+}
+.ff-embed .fluentform .ff-el-is-error .ff-el-form-control { border-color: #dc2626; }
+.ff-embed .fluentform .error.text-danger { margin-top: 0.375rem; font-size: 0.8125rem; color: #b91c1c; }
+.ff-embed .fluentform .ff-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  border: 0;
+  border-radius: 9999px;
+  background-color: var(--color-brand-600) !important; /* Fluent Forms sets the button colour inline */
+  padding: 0.875rem 1.75rem;
+  font: inherit;
+  font-weight: 500;
+  color: #fff !important;
+  cursor: pointer;
+  transition: background-color 0.3s, translate 0.3s, box-shadow 0.3s;
+}
+.ff-embed .fluentform .ff-btn-submit:hover { background-color: var(--color-brand-700) !important; translate: 0 -2px; }
+.ff-embed .fluentform .ff-btn-submit:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+.ff-embed .fluentform .ff-btn-submit[disabled] { opacity: 0.6; cursor: progress; translate: none; }
+@media (width < 40rem) {
+  .ff-embed .fluentform .ff-btn-submit { width: 100%; }
+  .ff-embed .fluentform .ff-t-container { display: block; } /* stack Fluent Forms' multi-column rows on phones */
+  .ff-embed .fluentform .ff-t-cell { width: 100% !important; padding: 0 !important; }
+}
+/* Fluent Forms' form title is meant for screen readers only. */
+.ff-embed .fluentform .ff_screen_reader_title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ff-embed .fluentform .ff-btn-submit { border-radius: 9999px !important; }
+/* Text inputs and dropdowns share one height. */
+.ff-embed .fluentform input.ff-el-form-control,
+.ff-embed .fluentform select.ff-el-form-control:not([multiple]):not([size]) { height: 3.25rem; }
+.ff-embed .fluentform .ff_tc_label a {
+  color: var(--color-brand-700);
+  text-decoration: underline;
+  text-decoration-color: var(--color-brand-200);
+  text-underline-offset: 3px;
+}
+.ff-embed .fluentform .ff_tc_label a:hover { text-decoration-color: var(--color-brand-600); }
+
+/* ------------------------------------------------------------------
+   Apply Now popup (components/apply/ApplyNowModal). A native <dialog>; closing plays the exit
+   animation first (data-closing). With reduced motion it only fades (see the base layer).
+   ------------------------------------------------------------------ */
+@keyframes apply-panel-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+}
+@keyframes apply-panel-out {
+  to { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+@keyframes apply-fade-in {
+  from { opacity: 0; }
+}
+@keyframes apply-fade-out {
+  to { opacity: 0; }
+}
+@layer components {
+  .apply-dialog[open] { animation: apply-panel-in 280ms var(--ease-out-soft) both; }
+  .apply-dialog[data-closing] { animation: apply-panel-out 180ms ease-in both; }
+  .apply-dialog::backdrop {
+    background-color: rgb(15 34 56 / 0.5);
+    backdrop-filter: blur(3px);
+    animation: apply-fade-in 280ms ease-out both;
+  }
+  .apply-dialog[data-closing]::backdrop { animation: apply-fade-out 180ms ease-in both; }
+}
+.apply-dialog .ff-embed .fluentform { max-width: 100%; }
+.apply-dialog .ff-embed .fluentform .ff-t-cell { min-width: 0; }
+.apply-dialog .ff-embed .fluentform .ff_submit_btn_wrapper { margin-bottom: 0; }
+.apply-dialog .ff-embed .fluentform .ff-el-section-break { margin-bottom: 1.25rem; }
+.apply-dialog .ff-embed .fluentform .ff-el-section-title { font-size: 1.0625rem; font-weight: 600; color: var(--color-ink-900); }
+/* Fluent Forms colours its info icon and required marks from these: use the site palette instead of its blue and red. */
+.apply-dialog .ff-embed .fluentform { --fluentform-primary: var(--color-brand-600); }
+.apply-dialog .ff-embed .fluentform .ff-el-input--label.ff-el-is-required.asterisk-right label::after { color: var(--color-brand-700); }
+.apply-dialog .ff-embed .fluentform .ff-btn-submit { width: 100%; }
+.apply-dialog .ff-embed .fluentform .ff-btn-submit:hover { opacity: 1; } /* Fluent Forms fades it on hover, washing out the darker teal */
+
+/* ------------------------------------------------------------------
+   "Get in touch" card inside WordPress articles (marked up by
+   lib/wpContent.js). Scoped to .wp-content; overrides the prose colours
+   that made its labels invisible on the dark background.
+   ------------------------------------------------------------------ */
+.wp-content .wp-contact-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-block: 2.5rem;
+  border-radius: 1.5rem;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--color-brand-600) 38%, transparent), transparent 60%),
+    radial-gradient(80% 70% at 0% 100%, color-mix(in srgb, var(--color-gold-400) 12%, transparent), transparent 60%),
+    var(--color-ink-900);
+  color: var(--color-ink-200);
+  text-align: left;
+  box-shadow: 0 24px 48px -24px rgb(9 24 41 / 0.55);
+}
+@media (width >= 40rem) {
+  .wp-content .wp-contact-card { padding: 2.5rem; }
+}
+.wp-content .wp-contact-card .wp-contact-card__title {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.wp-content .wp-contact-card .wp-contact-card__title::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 3px;
+  margin-bottom: 1rem;
+  border-radius: 9999px;
+  background: var(--color-gold-400);
+}
+@media (width >= 40rem) {
+  .wp-content .wp-contact-card .wp-contact-card__title { font-size: 1.875rem; }
+}
+.wp-content .wp-contact-card .wp-contact-card__lead {
+  max-width: 40rem;
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--color-ink-200);
+}
+/* Tiles sit side by side only when each is wide enough to keep an email on one line. */
+.wp-content .wp-contact-card .wp-contact-card__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19.5rem), 1fr));
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+.wp-content .wp-contact-card .wp-contact-card__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  border-radius: 1rem;
+  padding: 0.875rem 1rem 0.875rem 3.75rem;
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  transition: background-color 0.3s, box-shadow 0.3s, translate 0.3s;
+}
+.wp-content .wp-contact-card .wp-contact-card__item:hover {
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+  translate: 0 -2px;
+}
+/* Icon tile: white line icon on the brand colour. */
+.wp-content .wp-contact-card .wp-contact-card__item::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.875rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  translate: 0 -50%;
+  border-radius: 0.75rem;
+  background: center / 1.125rem no-repeat var(--icon), var(--color-brand-600);
+}
+.wp-content .wp-contact-card .wp-contact-card__item.is-phone {
+  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z'/%3E%3C/svg%3E");
+}
+.wp-content .wp-contact-card .wp-contact-card__item.is-email {
+  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E");
+}
+.wp-content .wp-contact-card .wp-contact-card__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brand-300);
+}
+.wp-content .wp-contact-card .wp-contact-card__item a {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: color 0.2s;
+}
+/* The whole tile is the link's click target. */
+.wp-content .wp-contact-card .wp-contact-card__item a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.wp-content .wp-contact-card .wp-contact-card__item a:hover { color: var(--color-gold-300); }
+.wp-content .wp-contact-card .wp-contact-card__item a:focus-visible { outline: none; }
+.wp-content .wp-contact-card .wp-contact-card__item:has(a:focus-visible) { box-shadow: inset 0 0 0 2px var(--color-gold-400); }
+@media (width >= 40rem) {
+  .wp-content .wp-contact-card .wp-contact-card__item { padding: 1rem 1.25rem 1rem 4.25rem; }
+  .wp-content .wp-contact-card .wp-contact-card__item::before { left: 1rem; width: 2.5rem; height: 2.5rem; }
+  .wp-content .wp-contact-card .wp-contact-card__item a { font-size: 1.125rem; }
+}
+/* Long emails wrap at the @ or dots rather than mid-word. */
+.wp-content .wp-contact-card .wp-contact-card__item a[href^="mailto:"] { overflow-wrap: break-word; word-break: normal; }
