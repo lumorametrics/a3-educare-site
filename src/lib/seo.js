@@ -1,3 +1,4 @@
+import { basePath, withBase } from "./basePath";
 import { useEffect } from "react";
 import { truncateText } from "./text";
 
@@ -20,7 +21,7 @@ export function siteUrl() {
 
 function absolute(url) {
   if (!url) return "";
-  return /^https?:\/\//i.test(url) ? url : `${siteUrl()}${url.startsWith("/") ? "" : "/"}${url}`;
+  return /^https?:\/\//i.test(url) ? url : `${siteUrl()}${withBase(url.startsWith("/") ? url : `/${url}`)}`;
 }
 
 function upsertMeta(attribute, key, content) {
@@ -63,7 +64,8 @@ export function applySeo({ title, description, image, type = "website", noindex 
 
   document.title = fullTitle;
   upsertMeta("name", "description", summary);
-  upsertMeta("name", "robots", noindex ? "noindex, follow" : "index, follow");
+  // VITE_PREVIEW_NOINDEX is set only for the client preview build; other builds follow each page's setting.
+  upsertMeta("name", "robots", noindex || import.meta.env.VITE_PREVIEW_NOINDEX === "true" ? "noindex, follow" : "index, follow");
   upsertLink("canonical", url);
   upsertMeta("property", "og:site_name", SITE_NAME);
   upsertMeta("property", "og:title", fullTitle);
@@ -120,5 +122,5 @@ export function collegeListingJsonLd(breadcrumb, colleges, collegeHref) {
 }
 
 export function organizationRef() {
-  return { "@type": "Organization", name: SITE_NAME, url: siteUrl(), logo: absolute(LOGO_IMAGE) };
+  return { "@type": "Organization", name: SITE_NAME, url: `${siteUrl()}${basePath}`, logo: absolute(LOGO_IMAGE) };
 }

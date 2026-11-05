@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ApplyNowModal from "../apply/ApplyNowModal";
+import { withBase } from "../../lib/basePath";
 import { Mail } from "../ui/Icons";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -19,7 +20,7 @@ export default function Footer() {
       <div className="shell grid grid-cols-1 gap-12 pt-16 pb-12 sm:pt-20 lg:grid-cols-[1.4fr_2fr] lg:gap-20">
         <div className="max-w-md">
           <a className="inline-flex items-center gap-3" href="/">
-            <span className="block rounded-xl bg-white px-4 py-3"><img src="/a3-educare-logo-wide-64.webp" srcSet="/a3-educare-logo-wide-64.webp 1x, /a3-educare-logo-wide-128.webp 2x" width="205" height="64" alt="A3 EduCare Hub & Research Academy" className="h-14 w-auto" loading="lazy" decoding="async" /></span>
+            <span className="block rounded-xl bg-white px-4 py-3"><img src={withBase("/a3-educare-logo-wide-64.webp")} srcSet={`${withBase("/a3-educare-logo-wide-64.webp")} 1x, ${withBase("/a3-educare-logo-wide-128.webp")} 2x`} width="205" height="64" alt="A3 EduCare Hub & Research Academy" className="h-14 w-auto" loading="lazy" decoding="async" /></span>
 
           </a>
           <p className="mt-5 text-sm leading-relaxed">Independent guidance on courses, colleges, and career pathways for Indian students — and students exploring study abroad.</p>

@@ -1,3 +1,4 @@
+import { withBase } from "../lib/basePath";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import Reveal from "../components/ui/Reveal";
 import SectionHeading from "../components/ui/SectionHeading";
@@ -122,8 +123,8 @@ export default function AboutUs() {
             />
             <div className="relative overflow-hidden rounded-[2rem] bg-ink-900 shadow-lift ring-1 ring-white/10">
               <img
-                src="/about/about-office-960.webp"
-                srcSet="/about/about-office-640.webp 640w, /about/about-office-960.webp 960w"
+                src={withBase("/about/about-office-960.webp")}
+                srcSet={`${withBase("/about/about-office-640.webp")} 640w, ${withBase("/about/about-office-960.webp")} 960w`}
                 sizes="(min-width: 1024px) 40vw, (min-width: 640px) 32rem, 100vw"
                 width="960"
                 height="960"
@@ -246,8 +247,8 @@ export default function AboutUs() {
               fetchPriority="high"
               decoding="async"
               className="aspect-[4/5] w-full object-cover object-[50%_35%]"
-              srcSet="/about/about-Ajay Kumar-.jpeg 640w, /about/about-Ajay Kumar-.jpeg 960w"
-              src="/about/about-Ajay Kumar-.jpeg"
+              srcSet={`${withBase("/about/about-Ajay Kumar-.jpeg")} 640w, ${withBase("/about/about-Ajay Kumar-.jpeg")} 960w`}
+              src={withBase("/about/about-Ajay Kumar-.jpeg")}
             />
             <span className="absolute bottom-5 left-5 rounded-full bg-white/90 backdrop-blur-md px-4 py-2 text-sm font-medium text-ink-900 shadow-card">
               Leadership with purpose

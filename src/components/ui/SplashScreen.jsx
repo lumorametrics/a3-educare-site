@@ -1,3 +1,5 @@
+import { withBase } from "../../lib/basePath";
+
 export default function SplashScreen({ label = "Loading your experience" }) {
   return (
     // Fills the viewport below the header so the footer is never visible (then pushed down) while
@@ -6,7 +8,7 @@ export default function SplashScreen({ label = "Loading your experience" }) {
       <div className="relative grid size-20 place-items-center">
         <span className="absolute inset-0 animate-ping rounded-full bg-brand-200/60 [animation-duration:2s]" />
         <span className="relative grid size-20 place-items-center rounded-full bg-white shadow-lift ring-1 ring-sand-200">
-          <img className="size-12 object-contain" src="/a3-educare-logo-96.webp" width="48" height="48" alt="" />
+          <img className="size-12 object-contain" src={withBase("/a3-educare-logo-96.webp")} width="48" height="48" alt="" />
         </span>
       </div>
       <div className="flex flex-col gap-1">

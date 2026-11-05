@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play } from "../ui/Icons";
+import { withBase } from "../../lib/basePath";
 import { HERO_SLIDES } from "./heroSlides";
 
 // Time each slide stays on screen before autoplay advances (the progress bar uses the same value).
@@ -140,10 +141,10 @@ export default function HeroSlider({ slides = HERO_SLIDES }) {
             >
               {mounted.has(index) && (
                 <picture>
-                  <source media="(max-width: 639px)" srcSet={`/hero/${slide.image}-mobile.webp`} type="image/webp" />
+                  <source media="(max-width: 639px)" srcSet={withBase(`/hero/${slide.image}-mobile.webp`)} type="image/webp" />
                   <img
-                    src={`/hero/${slide.image}-1408.webp`}
-                    srcSet={`/hero/${slide.image}-1024.webp 1024w, /hero/${slide.image}-1408.webp 1408w`}
+                    src={withBase(`/hero/${slide.image}-1408.webp`)}
+                    srcSet={`${withBase(`/hero/${slide.image}-1024.webp`)} 1024w, ${withBase(`/hero/${slide.image}-1408.webp`)} 1408w`}
                     sizes="100vw"
                     alt=""
                     width="1408"

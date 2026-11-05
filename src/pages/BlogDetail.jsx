@@ -1,3 +1,4 @@
+import { withBase } from "../lib/basePath";
 import { useEffect, useMemo, useState } from "react";
 import { getPostBySlug, getPostFeaturedImage, getPostTerms } from "../services/wordpress";
 import SplashScreen from "../components/ui/SplashScreen";
@@ -131,7 +132,7 @@ export default function BlogDetail({ slug }) {
             </section>
           )}
 
-          <ShareButtons url={`${siteUrl()}/blog/${post.slug}`} title={toPlainText(post.title?.rendered)} />
+          <ShareButtons url={`${siteUrl()}${withBase(`/blog/${post.slug}`)}`} title={toPlainText(post.title?.rendered)} />
 
           <div className="mt-12 max-w-3xl border-t border-sand-200 pt-8">
             <a className="link-arrow" href="/blog"><ArrowRight className="rotate-180" /> Back to all articles</a>

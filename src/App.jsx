@@ -4,6 +4,7 @@ import Footer from "./components/common/Footer";
 import PageEffects from "./components/ui/PageEffects";
 import WhatsAppButton from "./components/common/WhatsAppButton";
 import SplashScreen from "./components/ui/SplashScreen";
+import { stripBase } from "./lib/basePath";
 import { applySeo } from "./lib/seo";
 import {
   getCollegeBySlug, getColleges, getCourseBySlug, getCourseCategories, getCourses, getDistrictBySlug,
@@ -86,7 +87,7 @@ function matchPath(path) {
 
 /** Old addresses (/about-us, /terms-of-use, /course-directory?category=x) are replaced in place by their sitemap URL. */
 function redirectLegacyPath() {
-  const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  const path = stripBase(window.location.pathname).replace(/^\/+|\/+$/g, "");
   let target = LEGACY_REDIRECTS[path];
   if (!target) return;
   const query = new URLSearchParams(window.location.search);
@@ -138,7 +139,7 @@ function getAppLink(event) {
   if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) return null;
   const url = new URL(anchor.href, window.location.href);
   if (url.origin !== window.location.origin) return null;
-  const path = url.pathname.replace(/^\/+|\/+$/g, "");
+  const path = stripBase(url.pathname).replace(/^\/+|\/+$/g, "");
   const route = path ? matchPath(path) : "";
   return route === null ? null : { url, route };
 }
@@ -166,7 +167,7 @@ function getRoute() {
   const hashRoute = matchPath(window.location.hash.slice(1).replace(/^\/+|\/+$/g, ""));
   if (hashRoute) return hashRoute;
 
-  const pathname = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  const pathname = stripBase(window.location.pathname).replace(/^\/+|\/+$/g, "");
   if (!pathname) return "";
   return matchPath(pathname) ?? "not-found";
 }

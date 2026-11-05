@@ -1,3 +1,4 @@
+import { stripBase } from "../lib/basePath";
 import { useEffect, useMemo, useState } from "react";
 import CourseCard from "../components/cards/CourseCard";
 import SplashScreen from "../components/ui/SplashScreen";
@@ -25,7 +26,7 @@ function getCategorySlug(course, categories = []) {
 
 /** Category of the current address: /courses/<category> (the sitemap URL), or an old ?category= link. */
 function getInitialCategory() {
-  const fromPath = window.location.pathname.match(/^\/courses\/([^/]+)\/?$/)?.[1];
+  const fromPath = stripBase(window.location.pathname).match(/^\/courses\/([^/]+)\/?$/)?.[1];
   if (fromPath) return decodeURIComponent(fromPath);
   const query = new URLSearchParams(window.location.search || window.location.hash.split("?")[1] || "");
   return query.get("category") || "all";

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "../ui/Icons";
 import ApplyNowModal from "../apply/ApplyNowModal";
+import { stripBase, withBase } from "../../lib/basePath";
 import { getApplyFormPage } from "../../services/wordpress";
 
 const menuItems = [
@@ -22,7 +23,7 @@ export default function Header() {
   const [applyOpen, setApplyOpen] = useState(false);
   const menuButtonRef = useRef(null);
   const openedFromMenu = useRef(false);
-  const pathname = window.location.pathname;
+  const pathname = stripBase(window.location.pathname);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -69,7 +70,7 @@ export default function Header() {
       />
       <div className="shell flex h-16 items-center justify-between gap-6 sm:h-20">
         <a className="group flex shrink-0 items-center gap-2.5" href="/" onClick={closeMenu}>
-          <img className="h-12 w-auto sm:h-14" src="/a3-educare-logo-wide-64.webp" srcSet="/a3-educare-logo-wide-64.webp 1x, /a3-educare-logo-wide-128.webp 2x" width="205" height="64" alt="A3 EduCare Hub & Research Academy" />
+          <img className="h-12 w-auto sm:h-14" src={withBase("/a3-educare-logo-wide-64.webp")} srcSet={`${withBase("/a3-educare-logo-wide-64.webp")} 1x, ${withBase("/a3-educare-logo-wide-128.webp")} 2x`} width="205" height="64" alt="A3 EduCare Hub & Research Academy" />
 
         </a>
 

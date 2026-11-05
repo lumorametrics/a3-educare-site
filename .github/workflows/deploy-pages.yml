@@ -1,0 +1,60 @@
+# Builds the site in this private repository and publishes only the built files
+# to the public repository a3-educare-site, which GitHub Pages serves.
+name: Deploy to public site repository
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_BASE_PATH: /a3-educare-site/
+          VITE_PREVIEW_NOINDEX: 'true'
+      - name: Prepare the site files
+        run: |
+          # GitHub Pages serves 404.html for addresses it has no file for, so direct links reach the app.
+          cp dist/index.html dist/404.html
+          # Serve the files exactly as built, without Jekyll processing.
+          touch dist/.nojekyll
+      - name: Stop if the build contains source or secret files
+        run: |
+          found=$(find dist -type f \( -name '*.map' -o -name '.env*' -o -name '*.jsx' -o -name '*.pem' -o -name '*.key' \))
+          if [ -n "$found" ]; then echo "$found"; exit 1; fi
+      - name: Publish to the public repository
+        env:
+          SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SITE_DEPLOY_KEY" > ~/.ssh/site_deploy_key
+          chmod 600 ~/.ssh/site_deploy_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/site_deploy_key -o IdentitiesOnly=yes"
+          git clone --depth 1 git@github.com:lumorametrics/a3-educare-site.git site
+          cd site
+          git checkout -B main
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a ../dist/. .
+          git add -A
+          if git diff --cached --quiet; then echo "No changes to publish"; exit 0; fi
+          git config user.name "a3-site-deploy"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update website build"
+          git push origin main

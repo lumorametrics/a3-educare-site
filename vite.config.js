@@ -41,7 +41,11 @@ function wordpressSeo(env) {
       isBuild = config.command === 'build'
     },
     transformIndexHtml(html) {
-      return html.replaceAll('%WP_ORIGIN%', new URL(apiBase).origin)
+      const page = html.replaceAll('%WP_ORIGIN%', new URL(apiBase).origin)
+      // Client preview builds only: keep the page out of search results.
+      return env.VITE_PREVIEW_NOINDEX === 'true'
+        ? page.replace('<meta name="robots" content="index, follow" />', '<meta name="robots" content="noindex, follow" />')
+        : page
     },
     async closeBundle() {
       if (!isBuild) return
@@ -94,6 +98,8 @@ function wordpressSeo(env) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   return {
+    // Empty for the domain root; set VITE_BASE_PATH when hosting under a sub-path (GitHub Pages).
+    base: process.env.VITE_BASE_PATH || env.VITE_BASE_PATH || '/',
     plugins: [react(), tailwindcss(), wordpressSeo(env)],
     server: {
       proxy: {
