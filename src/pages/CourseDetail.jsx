@@ -69,7 +69,7 @@ function collectApiFields(course, fields) {
       .filter(([key, value]) => !excluded.has(key) && value !== null && value !== "" && value !== false)
       .map(([key, value]) => ({ key, label: formatLabel(key), value })),
     ...Object.entries(fields)
-      .filter(([_key, value]) => value !== null && value !== "" && value !== false)
+      .filter(([key, value]) => !/^categorySlug$/i.test(key) && value !== null && value !== "" && value !== false)
       .map(([key, value]) => ({ key: `acf-${key}`, label: formatLabel(key), value })),
   ];
 }
@@ -154,7 +154,7 @@ function getAdditionalFields(fields) {
     "website", "cta_heading", "cta_description",
   ]);
   return Object.entries(fields)
-    .filter(([key, value]) => !excluded.has(key) && !/^faq(?:_|$)/i.test(key) && value !== null && value !== "" && value !== false)
+    .filter(([key, value]) => !excluded.has(key) && !/^categorySlug$/i.test(key) && !/^faq(?:_|$)/i.test(key) && value !== null && value !== "" && value !== false)
     .map(([key, value]) => ({ label: formatLabel(key), value: renderValue(value) }))
     .filter((item) => item.value);
 }
