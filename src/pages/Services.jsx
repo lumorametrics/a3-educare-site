@@ -56,10 +56,10 @@ export default function Services() {
     <main>
       <section className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--color-brand-100),transparent_55%),radial-gradient(ellipse_at_bottom_left,var(--color-gold-100),transparent_50%)]" />
-        <div className="shell relative grid grid-cols-1 items-center gap-14 pt-10 pb-16 sm:pt-16 lg:grid-cols-[1.1fr_0.9fr] lg:pb-24">
+        <div className="shell relative grid grid-cols-1 items-center gap-10 pt-10 pb-16 sm:pt-16 md:grid-cols-[1.1fr_0.9fr] lg:gap-14 lg:pb-24">
           <div className="motion-safe:animate-fade-up">
             <p className="eyebrow mb-5">Guidance for your next chapter</p>
-            <h1 className="heading-display text-[2.75rem] leading-[1.03] sm:text-6xl lg:text-7xl">Better decisions begin with <em>the right guidance.</em></h1>
+            <h1 className="heading-display text-[2.5rem] leading-[1.05] sm:text-5xl lg:text-7xl">Better decisions begin with <em>the right guidance.</em></h1>
             <p className="mt-6 max-w-xl text-lg text-ink-500">From choosing your first course to planning a study-abroad journey, A3 EduCare Hub helps you move forward with clarity, context and confidence.</p>
             <div className="mt-9 flex flex-wrap gap-3">
               <a className="btn btn-primary px-7 py-3.5" href="/#contact">Talk to an advisor <ArrowUpRight /></a>

@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { getStudyAbroadBySlug } from "../services/wordpress";
 import SplashScreen from "../components/ui/SplashScreen";
-import Breadcrumb from "../components/ui/Breadcrumb";
+import PlaceHero from "../components/state/PlaceHero";
 import FaqAccordion from "../components/ui/FaqAccordion";
 import StatusMessage from "../components/ui/StatusMessage";
 import CtaBand from "../components/ui/CtaBand";
 import Reveal from "../components/ui/Reveal";
 import FadeImage from "../components/ui/FadeImage";
-import { Check, Globe } from "../components/ui/Icons";
+import { Check } from "../components/ui/Icons";
 import { toPlainText } from "../lib/text";
 import { useSeo } from "../lib/seo";
+import { getHeroImage } from "../lib/collegeImage";
 
 function stripHtml(value = "") {
   return toPlainText(getText(value).replace(/```/g, ""));
@@ -265,32 +266,19 @@ export default function StudyAbroadDetail({ slug }) {
 
   return (
     <main>
-      <section className="relative overflow-hidden bg-ink-900">
-        <div aria-hidden="true" className="pointer-events-none absolute -top-40 -right-20 size-[32rem] rounded-full bg-brand-600/30 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 -left-20 size-96 rounded-full bg-gold-400/10 blur-3xl" />
-        <div className="shell relative pt-8 pb-16 sm:pb-24">
-          <Breadcrumb tone="dark" items={[{ label: "Home", href: "/" }, { label: "Study Abroad", href: "/study-abroad" }, { label: title }]} />
-          <div className={`grid items-center gap-12 ${image ? "lg:grid-cols-[1.1fr_0.9fr]" : ""}`}>
-            <div className="max-w-3xl motion-safe:animate-fade-up">
-              <p className="eyebrow mb-4 text-gold-400"><Globe className="size-4" /> Destination guide</p>
-              <h1 className="font-display text-4xl leading-[1.05] font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">{title}</h1>
-              {intro && <p className="mt-6 max-w-2xl text-lg text-ink-200">{intro}</p>}
-              <div className="mt-8 flex flex-wrap gap-3">
-                {["Explore your options", "Plan with confidence"].map((step, index) => (
-                  <span key={step} className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 py-2 pr-4 pl-2 text-sm text-ink-100">
-                    <b className="grid size-7 place-items-center rounded-full bg-gold-400 text-xs text-ink-900">0{index + 1}</b>{step}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {image && (
-              <figure className="motion-safe:animate-fade-up [animation-delay:120ms]">
-                <FadeImage className="aspect-[4/3] w-full rounded-[2rem] shadow-lift ring-1 ring-white/10" src={image} alt={title} fetchPriority="high" />
-              </figure>
-            )}
-          </div>
-        </div>
-      </section>
+      <PlaceHero
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "Study Abroad", href: "/study-abroad" }, { label: title }]}
+        eyebrow="Destination guide"
+        title={title}
+        longTitle={title.length > 34}
+        description={intro}
+        image={getHeroImage(fields.header_image, title) || (image ? { url: image, alt: title, note: "" } : null)}
+        actions={["Explore your options", "Plan with confidence"].map((step, index) => (
+          <span key={step} className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 py-2 pr-4 pl-2 text-sm text-ink-100 backdrop-blur-sm">
+            <b className="grid size-7 place-items-center rounded-full bg-accent text-xs text-ink-950">0{index + 1}</b>{step}
+          </span>
+        ))}
+      />
 
       {content && (
         <section className="shell section-y">

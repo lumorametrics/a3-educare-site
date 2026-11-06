@@ -94,3 +94,12 @@ export function resolveCollegeImage(fields = {}, fallbackAlt = "") {
   }
   return null;
 }
+
+/** A place photo from an ACF image field as { url, alt, note } for PlaceHero, or null when the field holds no media record. */
+export function getHeroImage(media, fallbackAlt = "") {
+  if (!media || typeof media !== "object") return null;
+  const full = media.source_url || media.url || "";
+  const large = media.media_details?.sizes?.large?.source_url || media.sizes?.large || full;
+  const url = window.innerWidth >= 768 ? full || large : large;
+  return url ? { url, alt: media.alt_text || media.alt || fallbackAlt, note: parseCredit(media)?.note || "" } : null;
+}

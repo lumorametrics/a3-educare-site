@@ -53,7 +53,7 @@ export default function Registration() {
       <section className="relative isolate overflow-hidden bg-ink-950 text-white">
         <div aria-hidden="true" className="pointer-events-none absolute -top-40 -right-32 size-[34rem] rounded-full bg-brand-600/30 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-48 -left-32 size-[30rem] rounded-full bg-gold-400/15 blur-3xl" />
-        <div className="shell relative grid grid-cols-1 items-center gap-10 pt-8 pb-16 sm:pb-20 lg:grid-cols-[1.25fr_0.75fr] lg:gap-16 lg:pt-14 lg:pb-24">
+        <div className="shell relative grid grid-cols-1 items-center gap-10 pt-8 pb-16 sm:pb-20 md:grid-cols-[1.25fr_0.75fr] lg:gap-16 lg:pt-14 lg:pb-24">
           <div className="min-w-0">
             <div className="motion-safe:animate-page-in"><Breadcrumb tone="dark" items={[{ label: "Home", href: "/" }, { label: "Registration" }]} /></div>
             <h1 className="text-[2.1rem] leading-[1.08] font-bold tracking-[-0.03em] text-white motion-safe:animate-fade-up min-[375px]:text-[2.4rem] sm:text-5xl lg:text-[3.5rem]">

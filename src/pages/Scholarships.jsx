@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getScholarships } from "../services/wordpress";
-import Breadcrumb from "../components/ui/Breadcrumb";
+import PlaceHero from "../components/state/PlaceHero";
 import CtaBand from "../components/ui/CtaBand";
 import FadeImage from "../components/ui/FadeImage";
 import Reveal from "../components/ui/Reveal";
@@ -8,6 +8,7 @@ import SectionHeading from "../components/ui/SectionHeading";
 import StatusMessage from "../components/ui/StatusMessage";
 import { ArrowDown, ArrowUpRight } from "../components/ui/Icons";
 import { getResponsiveImage } from "../lib/media";
+import { getHeroImage } from "../lib/collegeImage";
 import { toPlainText } from "../lib/text";
 
 const CARD_SIZES = "(min-width: 1024px) 26rem, (min-width: 640px) 50vw, 100vw";
@@ -53,42 +54,23 @@ export default function Scholarships() {
   }, [attempt]);
 
   // The hero photo comes from WordPress too: the first category's banner image.
-  const heroImage = getResponsiveImage(items[0]?.acf?.featured_image);
+  const heroImage = getHeroImage(items[0]?.acf?.featured_image, "Students studying together");
 
   return (
     <main>
-      <section className="relative isolate overflow-hidden bg-ink-950 text-white">
-        <div aria-hidden="true" className="pointer-events-none absolute -top-40 -right-32 size-[34rem] rounded-full bg-brand-600/30 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-48 -left-32 size-[30rem] rounded-full bg-gold-400/15 blur-3xl" />
-        <div className="shell relative grid grid-cols-1 items-center gap-12 pt-8 pb-16 sm:pb-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-14 lg:pb-24">
-          <div className="min-w-0">
-            <div className="motion-safe:animate-page-in"><Breadcrumb tone="dark" items={[{ label: "Home", href: "/" }, { label: "Scholarships" }]} /></div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium tracking-wide text-white backdrop-blur-sm motion-safe:animate-fade-up">
-              <span aria-hidden="true" className="size-1.5 rounded-full bg-gold-400" />
-              Funding your education
-            </p>
-            <h1 className="mt-5 text-[2.4rem] leading-[1.05] font-bold tracking-[-0.03em] text-white motion-safe:animate-fade-up motion-safe:[animation-delay:90ms] min-[375px]:text-[2.75rem] sm:text-6xl lg:text-[4.25rem]">
-              <span className="text-brand-300">Scholarships</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/75 motion-safe:animate-fade-up motion-safe:[animation-delay:180ms] sm:text-lg">
-              Scholarships can reduce the cost of your education, in India or abroad. Explore the main types of support available to students, who can apply and what you will need.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 motion-safe:animate-fade-up motion-safe:[animation-delay:270ms] min-[420px]:flex-row min-[420px]:flex-wrap">
-              <a className="btn btn-primary px-7 py-3.5" href="#scholarship-categories">Browse categories <ArrowDown /></a>
-              <a className="btn btn-ghost-light px-7 py-3.5" href="/contact">Talk to an advisor <ArrowUpRight /></a>
-            </div>
-          </div>
-
-          {status !== "error" && (status === "loading" || heroImage) && (
-            <figure className="relative mx-auto w-full max-w-md motion-safe:animate-fade-up motion-safe:[animation-delay:150ms] sm:max-w-lg lg:max-w-none">
-              <div aria-hidden="true" className="absolute inset-0 translate-x-3 translate-y-3 rounded-[2rem] border border-gold-400/40 sm:translate-x-5 sm:translate-y-5" />
-              {heroImage
-                ? <FadeImage src={heroImage.src} srcSet={heroImage.srcSet} sizes="(min-width: 1024px) 40vw, (min-width: 640px) 32rem, 100vw" alt={heroImage.alt || "Students studying together"} fetchPriority="high" zoom={false} className="relative aspect-[4/3] w-full rounded-[2rem] shadow-lift ring-1 ring-white/10" />
-                : <div aria-hidden="true" className="relative aspect-[4/3] w-full animate-pulse rounded-[2rem] bg-white/10" />}
-            </figure>
-          )}
-        </div>
-      </section>
+      <PlaceHero
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "Scholarships" }]}
+        eyebrow="Funding your education"
+        title="Scholarships"
+        description="Scholarships can reduce the cost of your education, in India or abroad. Explore the main types of support available to students, who can apply and what you will need."
+        image={heroImage}
+        actions={(
+          <>
+            <a className="btn bg-accent text-ink-950 hover:-translate-y-0.5 hover:brightness-110" href="#scholarship-categories">Browse categories <ArrowDown /></a>
+            <a className="btn btn-ghost-light" href="/contact">Talk to an advisor <ArrowUpRight /></a>
+          </>
+        )}
+      />
 
       <section id="scholarship-categories" className="shell section-y scroll-mt-20">
         <SectionHeading

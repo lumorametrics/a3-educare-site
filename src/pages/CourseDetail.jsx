@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { getCourseBySlug } from "../services/wordpress";
 import SplashScreen from "../components/ui/SplashScreen";
-import Breadcrumb from "../components/ui/Breadcrumb";
+import PlaceHero from "../components/state/PlaceHero";
 import FaqAccordion from "../components/ui/FaqAccordion";
 import StatusMessage from "../components/ui/StatusMessage";
 import CtaBand from "../components/ui/CtaBand";
 import Reveal from "../components/ui/Reveal";
-import FadeImage from "../components/ui/FadeImage";
 import { ArrowUpRight, Book, Check, Clock, Graduation, Wallet } from "../components/ui/Icons";
 import { toPlainText, truncateText } from "../lib/text";
 import { organizationRef, useSeo } from "../lib/seo";
 import { courseCategoryUrl, courseUrl } from "../lib/urls";
-import { parseCredit } from "../lib/collegeImage";
+import { getHeroImage } from "../lib/collegeImage";
 
 
 function stripMarkup(value = "") {
@@ -203,9 +202,6 @@ export default function CourseDetail({ slug, category: urlCategory }) {
   const fields = course.acf || {};
   const title = course.title?.rendered || "Course";
   const image = getCourseImage(course, fields);
-  const heroField = typeof fields.hero_image === "object" ? fields.hero_image : null;
-  const credit = heroField ? parseCredit(heroField) : null;
-  const heroAlt = heroField?.alt || "";
   const overview = valueFrom(fields, ["course_overview", "course_short_introduction", "overview"], course.excerpt?.rendered || "");
   const sections = getSections(fields);
   const faqs = getFaqs(fields);
@@ -247,35 +243,21 @@ export default function CourseDetail({ slug, category: urlCategory }) {
 
   return (
     <main>
-      <section className="relative overflow-hidden bg-linear-to-br from-brand-50 via-sand-50 to-gold-100/40">
-        <div aria-hidden="true" className="pointer-events-none absolute -top-32 -right-24 size-[28rem] rounded-full bg-brand-200/40 blur-3xl" />
-        <div className="shell relative pt-8 pb-24 sm:pb-28">
-          <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Courses", href: "/courses" }, ...(category && course.categorySlug ? [{ label: category, href: courseCategoryUrl(course.categorySlug) }] : []), { label: title }]} />
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="motion-safe:animate-fade-up">
-              <p className="eyebrow mb-4">{category}</p>
-              <h1 className="heading-display text-4xl leading-[1.05] sm:text-5xl lg:text-6xl" dangerouslySetInnerHTML={{ __html: title }} />
-              <p className="mt-6 max-w-2xl text-lg text-ink-500">{stripMarkup(overview) || "Explore course details, eligibility, admissions and career opportunities."}</p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a className="btn btn-dark" href="/#contact">Get guidance <ArrowUpRight /></a>
-                {officialSource ? <a className="btn btn-outline" href={officialSource} target="_blank" rel="noreferrer">Official source <ArrowUpRight /></a> : <a className="btn btn-outline" href="/courses">Browse courses <ArrowUpRight /></a>}
-              </div>
-            </div>
-            {image ? (
-              <figure className="relative motion-safe:animate-fade-up [animation-delay:120ms]">
-                <FadeImage className="aspect-[4/3] w-full rounded-[2rem] shadow-lift" src={image} alt={heroAlt || stripMarkup(title)} fetchPriority="high" />
-                {credit?.note && <figcaption className="mt-3 text-xs text-ink-500">{credit.note}</figcaption>}
-              </figure>
-            ) : (
-              <div className="relative hidden aspect-[4/3] overflow-hidden rounded-[2rem] bg-ink-900 p-10 shadow-lift motion-safe:animate-fade-up [animation-delay:120ms] lg:flex lg:items-end">
-                <div aria-hidden="true" className="absolute -top-16 -right-16 size-64 rounded-full bg-brand-500/40 blur-3xl" />
-                <Graduation className="absolute top-10 right-10 size-20 text-white/15" strokeWidth={1.2} />
-                <p className="relative font-display text-3xl leading-tight text-white">A3 Educare Hub &amp;<br /><em className="text-gold-400">Research Academy</em></p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      <PlaceHero
+        cardsBelow
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "Courses", href: "/courses" }, ...(category && course.categorySlug ? [{ label: category, href: courseCategoryUrl(course.categorySlug) }] : []), { label: title }]}
+        eyebrow={toPlainText(category)}
+        title={stripMarkup(title)}
+        longTitle={stripMarkup(title).length > 34}
+        description={stripMarkup(fields.course_short_introduction || overview) || "Explore course details, eligibility, admissions and career opportunities."}
+        image={getHeroImage(fields.hero_image, stripMarkup(title)) || (image ? { url: image, alt: stripMarkup(title), note: "" } : null)}
+        actions={(
+          <>
+            <a className="btn bg-accent text-ink-950 hover:-translate-y-0.5 hover:brightness-110" href="/#contact">Get guidance <ArrowUpRight /></a>
+            {officialSource ? <a className="btn btn-ghost-light" href={officialSource} target="_blank" rel="noreferrer">Official source <ArrowUpRight /></a> : <a className="btn btn-ghost-light" href="/courses">Browse courses <ArrowUpRight /></a>}
+          </>
+        )}
+      />
 
       <section className="shell relative -mt-14 sm:-mt-16">
         <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -103,7 +103,7 @@ export default function HeroSlider({ slides = HERO_SLIDES }) {
       // Fills the screen below the header (capped at 820px), but never shorter than its content:
       // the slides share one grid cell, so the tallest slide sets the height and short or narrow
       // screens grow the hero instead of clipping the text.
-      className="relative isolate grid min-h-[max(560px,min(calc(100svh-4rem),820px))] touch-pan-y overflow-hidden bg-ink-950 text-white sm:min-h-[max(560px,min(calc(100svh-5rem),820px))]"
+      className="hero-photo relative isolate grid touch-pan-y overflow-hidden bg-ink-950 text-white"
       style={{ "--hero-interval": `${AUTOPLAY_MS}ms` }}
       onKeyDown={onKeyDown}
       onPointerDown={onPointerDown}
@@ -192,7 +192,7 @@ export default function HeroSlider({ slides = HERO_SLIDES }) {
 
       {count > 1 && (
         <div className="absolute inset-x-0 bottom-0 z-30 pb-16 sm:pb-24">
-          <div className="shell flex items-center justify-between gap-4">
+          <div className="shell flex items-center justify-between gap-2 min-[360px]:gap-4">
             <div className="flex items-center gap-1 sm:gap-2">
               {slides.map((slide, index) => {
                 const isActive = index === active;
@@ -236,7 +236,7 @@ export default function HeroSlider({ slides = HERO_SLIDES }) {
                 type="button"
                 aria-label="Previous slide"
                 onClick={() => goTo(active - 1)}
-                className="grid size-11 place-items-center rounded-full border border-white/25 bg-white/5 backdrop-blur-sm transition-[background-color,border-color,scale] duration-300 hover:border-white/60 hover:bg-white/15 active:scale-95 sm:size-12"
+                className="grid size-10 place-items-center min-[360px]:size-11 rounded-full border border-white/25 bg-white/5 backdrop-blur-sm transition-[background-color,border-color,scale] duration-300 hover:border-white/60 hover:bg-white/15 active:scale-95 sm:size-12"
               >
                 <ChevronLeft className="size-5" />
               </button>
@@ -244,7 +244,7 @@ export default function HeroSlider({ slides = HERO_SLIDES }) {
                 type="button"
                 aria-label="Next slide"
                 onClick={() => goTo(active + 1)}
-                className="grid size-11 place-items-center rounded-full border border-white/25 bg-white/5 backdrop-blur-sm transition-[background-color,border-color,scale] duration-300 hover:border-white/60 hover:bg-white/15 active:scale-95 sm:size-12"
+                className="grid size-10 place-items-center min-[360px]:size-11 rounded-full border border-white/25 bg-white/5 backdrop-blur-sm transition-[background-color,border-color,scale] duration-300 hover:border-white/60 hover:bg-white/15 active:scale-95 sm:size-12"
               >
                 <ChevronRight className="size-5" />
               </button>

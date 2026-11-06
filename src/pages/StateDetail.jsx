@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getColleges, getCourseCategories, getDistricts, getStateBySlug, getStates } from "../services/wordpress";
 import SplashScreen from "../components/ui/SplashScreen";
-import StateHero from "../components/state/StateHero";
+import PlaceHero from "../components/state/PlaceHero";
 import SectionHeading from "../components/ui/SectionHeading";
 import FaqAccordion from "../components/ui/FaqAccordion";
 import StatusMessage from "../components/ui/StatusMessage";
@@ -146,13 +146,14 @@ export default function StateDetail({ slug }) {
 
   return (
     <main>
-      <StateHero
+      <PlaceHero
+        longTitle
         breadcrumb={[{ label: "Home", href: "/" }, { label: "States", href: "/states" }, { label: title }]}
         eyebrow={fields.state_type ? `${fields.state_type} education guide` : "State education guide"}
         title={<>Higher Education in <em>{title}</em></>}
         description={toPlainText(fields.state_short_introduction) || `Explore education, colleges, courses and admission information for ${title}.`}
         facts={facts.map(([label, value, Icon]) => [label, toPlainText(value), Icon])}
-        image={image}
+        image={image ? { url: image.url, alt: image.alt || title, note: image.credit?.note || "" } : null}
       />
 
       {overview && (

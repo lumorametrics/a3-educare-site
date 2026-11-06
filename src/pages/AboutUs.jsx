@@ -81,7 +81,7 @@ export default function AboutUs() {
           className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.04)_1px,transparent_1px)] mask-[radial-gradient(ellipse_at_center,black,transparent_75%)] bg-size-[48px_48px]"
         />
 
-        <div className="shell relative grid grid-cols-1 items-center gap-12 pt-8 pb-28 sm:pb-32 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-14 lg:pb-36">
+        <div className="shell relative grid grid-cols-1 items-center gap-12 pt-8 pb-28 sm:pb-32 md:grid-cols-[1.05fr_0.95fr] md:gap-10 lg:gap-16 lg:pt-14 lg:pb-36">
           <div className="min-w-0">
             <div className="motion-safe:animate-page-in">
               <Breadcrumb

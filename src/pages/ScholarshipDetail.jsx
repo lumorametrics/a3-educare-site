@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getScholarshipBySlug, getScholarships } from "../services/wordpress";
-import Breadcrumb from "../components/ui/Breadcrumb";
+import PlaceHero from "../components/state/PlaceHero";
 import CtaBand from "../components/ui/CtaBand";
 import FadeImage from "../components/ui/FadeImage";
 import FaqAccordion from "../components/ui/FaqAccordion";
@@ -117,25 +117,14 @@ export default function ScholarshipDetail({ slug }) {
 
   return (
     <main>
-      <section className="relative isolate overflow-hidden bg-ink-950 text-white">
-        {banner && (
-          <>
-            <img src={banner.src} srcSet={banner.srcSet} sizes="100vw" alt={banner.alt} fetchPriority="high" decoding="async" className="absolute inset-0 -z-10 size-full object-cover" />
-            <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-ink-950/95 via-ink-950/80 to-ink-950/40" />
-          </>
-        )}
-        <div className="shell relative flex min-h-[26rem] flex-col justify-center pt-8 pb-16 sm:min-h-[30rem] sm:pb-20">
-          <div className="motion-safe:animate-page-in"><Breadcrumb tone="dark" items={[{ label: "Home", href: "/" }, { label: "Scholarships", href: "/scholarships" }, { label: title }]} /></div>
-          <div className="max-w-3xl">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium tracking-wide text-white backdrop-blur-sm motion-safe:animate-fade-up">
-              <span aria-hidden="true" className="size-1.5 rounded-full bg-gold-400" />
-              Scholarship guide
-            </p>
-            <h1 className="mt-5 text-[2rem] leading-[1.1] font-bold tracking-[-0.02em] text-white motion-safe:animate-fade-up motion-safe:[animation-delay:90ms] min-[375px]:text-[2.25rem] sm:text-5xl lg:text-[3.5rem]">{heading}</h1>
-            {intro && <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/80 motion-safe:animate-fade-up motion-safe:[animation-delay:180ms] sm:text-lg">{intro}</p>}
-          </div>
-        </div>
-      </section>
+      <PlaceHero
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "Scholarships", href: "/scholarships" }, { label: title }]}
+        eyebrow="Scholarship guide"
+        title={title}
+        longTitle={title.length > 34}
+        description={intro}
+        image={banner ? { url: banner.src, alt: banner.alt || title, note: "" } : null}
+      />
 
       {(has(about) || categoryImage) && (
         <section className="section-y bg-white">

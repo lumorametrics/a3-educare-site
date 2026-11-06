@@ -1,4 +1,4 @@
-import PageHero from "../ui/PageHero";
+import PlaceHero from "../state/PlaceHero";
 import SectionHeading from "../ui/SectionHeading";
 import StatusMessage from "../ui/StatusMessage";
 import CtaBand from "../ui/CtaBand";
@@ -8,7 +8,7 @@ import CollegeResults from "./CollegeResults";
 
 import { ArrowUpRight } from "../ui/Icons";
 import { CATEGORY_INFO } from "../../lib/categoryInfo";
-import { parseCredit } from "../../lib/collegeImage";
+import { getHeroImage } from "../../lib/collegeImage";
 import { toPlainText } from "../../lib/text";
 import { courseUrl } from "../../lib/urls";
 
@@ -19,21 +19,6 @@ function CollegeGrid({ colleges }) {
         <Reveal as="li" key={college.id} delay={(index % 3) * 70} className="h-full"><CollegeCard college={college} showDetails /></Reveal>
       ))}
     </ul>
-  );
-}
-
-/** Photo of the place from an ACF image field that has been swapped for its media record; null when there is none. */
-function PlacePhoto({ media, alt }) {
-  if (!media || typeof media !== "object") return null;
-  const sizes = media.media_details?.sizes || {};
-  const src = sizes.large?.source_url || sizes.medium_large?.source_url || media.source_url;
-  if (!src) return null;
-  const credit = parseCredit(media);
-  return (
-    <figure className="max-w-3xl">
-      <img src={src} alt={media.alt_text || alt} className="aspect-video w-full rounded-2xl object-cover shadow-card" width="1024" height="576" decoding="async" />
-      {credit?.note && <figcaption className="mt-3 text-xs text-ink-500">{credit.note}</figcaption>}
-    </figure>
   );
 }
 
@@ -51,15 +36,20 @@ export default function CollegeCategoryPage({
   const count = colleges.length;
   return (
     <main>
-      <PageHero breadcrumb={breadcrumb} eyebrow={eyebrow} title={title} description={description}>
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-wrap gap-3">
-            <a className="btn btn-outline" href={parentHref}>{parentLabel} <ArrowUpRight /></a>
-            {elsewhereHref && <a className="btn btn-outline" href={elsewhereHref.href}>{elsewhereHref.label} <ArrowUpRight /></a>}
-          </div>
-          <PlacePhoto media={image} alt={imageAlt} />
-        </div>
-      </PageHero>
+      <PlaceHero
+        breadcrumb={breadcrumb}
+        eyebrow={eyebrow}
+        title={title}
+        longTitle={`${categoryName} Colleges in ${placeName}`.length > 34}
+        description={description}
+        image={getHeroImage(image, imageAlt)}
+        actions={(
+          <>
+            <a className="btn bg-accent text-ink-950 hover:-translate-y-0.5 hover:brightness-110" href={parentHref}>{parentLabel} <ArrowUpRight /></a>
+            {elsewhereHref && <a className="btn btn-ghost-light" href={elsewhereHref.href}>{elsewhereHref.label} <ArrowUpRight /></a>}
+          </>
+        )}
+      />
 
       {(placeIntro || categoryInfo) && (
         <section className="shell pt-14 sm:pt-20">

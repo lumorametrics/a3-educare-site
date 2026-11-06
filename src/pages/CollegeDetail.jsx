@@ -153,12 +153,12 @@ export default function CollegeDetail({ slug }) {
 
   return (
     <main>
-      <section className="relative isolate overflow-hidden bg-ink-900">
+      <section className="hero-photo relative isolate flex overflow-hidden bg-ink-900">
         <CollegeHeroBackdrop image={image} onPhotoFailed={setFailedPhoto} />
-        <div className="shell relative flex min-h-[34rem] flex-col pt-8 pb-24 sm:min-h-[36rem] sm:pb-28 lg:min-h-[38rem]">
+        <div className="shell relative flex w-full flex-col pt-8 pb-24 sm:pb-28">
           <Breadcrumb tone="dark" items={[{ label: "Home", href: "/" }, { label: "Colleges", href: "/colleges" }, { label: title }]} />
-          <div className="mt-auto max-w-3xl pt-28 motion-safe:animate-fade-up sm:pt-12">
-            <p className="eyebrow mb-4 text-gold-400">College guide</p>
+          <div className="mt-auto max-w-3xl pt-16 motion-safe:animate-fade-up sm:pt-12">
+            <p className="mb-4 flex items-center gap-3 text-sm font-semibold tracking-wide text-accent"><span aria-hidden="true" className="h-0.5 w-8 shrink-0 rounded-full bg-accent" />College guide</p>
             {heroBadges.length > 0 && (
               <ul className="mb-5 flex flex-wrap gap-2">
                 {heroBadges.map(([label, Icon]) => (
@@ -172,7 +172,7 @@ export default function CollegeDetail({ slug }) {
             {hasLocation && <p className="mt-4 flex items-center gap-2 text-base font-medium text-white/90 sm:text-lg"><MapPin className="size-5 shrink-0 text-gold-400" />{location}</p>}
             {overview && <div className="mt-5 line-clamp-4 max-w-2xl text-base leading-relaxed text-white/85 sm:line-clamp-5 sm:text-lg [&_p]:m-0" dangerouslySetInnerHTML={{ __html: html(overview) }} />}
             <div className="mt-8 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap">
-              <a className="btn btn-gold" href="/#contact">Get admission guidance <ArrowUpRight /></a>
+              <a className="btn bg-accent text-ink-950 hover:-translate-y-0.5 hover:brightness-110" href="/#contact">Get admission guidance <ArrowUpRight /></a>
               {officialSource && <a className="btn btn-ghost-light" href={officialSource} target="_blank" rel="noreferrer">Official website <ArrowUpRight /></a>}
             </div>
             {image?.credit?.note && failedPhoto !== image.src && (

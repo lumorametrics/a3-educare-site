@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getCourseCategories, getDistrictBySlug, getDistricts, getStates } from "../services/wordpress";
+import { getCourseCategories, getDistrictBySlug, getDistricts, getStateBySlug, getStates } from "../services/wordpress";
 import { toPlainText } from "../lib/text";
 import SplashScreen from "../components/ui/SplashScreen";
-import Breadcrumb from "../components/ui/Breadcrumb";
+import PlaceHero from "../components/state/PlaceHero";
 import FaqAccordion from "../components/ui/FaqAccordion";
 import StatusMessage from "../components/ui/StatusMessage";
 import CtaBand from "../components/ui/CtaBand";
@@ -10,7 +10,7 @@ import Reveal from "../components/ui/Reveal";
 import { ArrowUpRight, Building, Check, MapPin } from "../components/ui/Icons";
 import { useSeo } from "../lib/seo";
 import { districtCategoryUrl, districtUrl, stateUrl } from "../lib/urls";
-import { parseCredit } from "../lib/collegeImage";
+import { getHeroImage } from "../lib/collegeImage";
 
 
 // Text sections in display order: [ACF key, heading]
@@ -48,6 +48,7 @@ export default function DistrictDetail({ slug, stateSlug: urlStateSlug }) {
   const [nearby, setNearby] = useState([]);
   const [stateSlug, setStateSlug] = useState("");
   const [categories, setCategories] = useState([]);
+  const [stateImage, setStateImage] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -92,6 +93,16 @@ export default function DistrictDetail({ slug, stateSlug: urlStateSlug }) {
     return () => { active = false; };
   }, [stateName, slug]);
 
+  // A district without its own photo uses its state's, as the district category pages do.
+  const needsStateImage = status === "ready" && !(district?.acf?.district_image && typeof district.acf.district_image === "object");
+  const stateForImage = district?.stateSlug || stateSlug;
+  useEffect(() => {
+    if (!needsStateImage || !stateForImage) return undefined;
+    let active = true;
+    getStateBySlug(stateForImage).then((items) => active && setStateImage(items[0]?.acf?.state_image || null)).catch(() => {});
+    return () => { active = false; };
+  }, [needsStateImage, stateForImage]);
+
   useSeo(district ? {
     title: `${toPlainText(district.title?.rendered)} education guide`,
     description: district.acf?.district_short_introduction,
@@ -109,9 +120,7 @@ export default function DistrictDetail({ slug, stateSlug: urlStateSlug }) {
   const colleges = splitList(fields.colleges_universities, ";");
   const sections = SECTIONS.map(([key, heading]) => [heading, toPlainText(fields[key])]).filter(([, text]) => text);
   const faqs = getFaqs(fields);
-  const photo = fields.district_image && typeof fields.district_image === "object" ? fields.district_image : null;
-  const photoUrl = photo?.media_details?.sizes?.large?.source_url || photo?.source_url || photo?.sizes?.large || photo?.url || "";
-  const photoCredit = photo ? parseCredit(photo) : null;
+  const heroImage = getHeroImage(fields.district_image, title) || getHeroImage(stateImage, stateName || title);
   const officialSource = /^https?:\/\//i.test(fields.official_source || "") ? fields.official_source : "";
   const facts = [
     ["State", fields.state_name, MapPin],
@@ -121,27 +130,20 @@ export default function DistrictDetail({ slug, stateSlug: urlStateSlug }) {
 
   return (
     <main>
-      <section className="relative overflow-hidden bg-linear-to-br from-brand-50 via-sand-50 to-gold-100/40">
-        <div aria-hidden="true" className="pointer-events-none absolute -top-32 -right-24 size-[28rem] rounded-full bg-brand-200/40 blur-3xl" />
-        <div className="shell relative pt-8 pb-24 sm:pb-28">
-          <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "States", href: "/states" }, ...(stateName && resolvedState ? [{ label: stateName, href: stateUrl(resolvedState) }] : []), { label: title }]} />
-          <div className="max-w-3xl motion-safe:animate-fade-up">
-            <p className="eyebrow mb-4">District education guide{stateName ? ` · ${stateName}` : ""}</p>
-            <h1 className="heading-display text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">{title}</h1>
-            {intro && <p className="mt-6 text-lg text-ink-500">{intro}</p>}
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a className="btn btn-dark" href="/#contact">Get guidance <ArrowUpRight /></a>
-              {officialSource && <a className="btn btn-outline" href={officialSource} target="_blank" rel="noreferrer">Official source <ArrowUpRight /></a>}
-            </div>
-          </div>
-          {photoUrl && (
-            <figure className="mt-10 max-w-3xl">
-              <img src={photoUrl} alt={photo.alt_text || photo.alt || title} className="aspect-[16/9] w-full rounded-2xl object-cover shadow-card" loading="eager" decoding="async" />
-              {photoCredit?.note && <figcaption className="mt-3 text-xs text-ink-500">{photoCredit.note}</figcaption>}
-            </figure>
-          )}
-        </div>
-      </section>
+      <PlaceHero
+        cardsBelow={facts.length > 0}
+        breadcrumb={[{ label: "Home", href: "/" }, { label: "States", href: "/states" }, ...(stateName && resolvedState ? [{ label: stateName, href: stateUrl(resolvedState) }] : []), { label: title }]}
+        eyebrow={stateName ? `${stateName} · District education guide` : "District education guide"}
+        title={title}
+        description={intro}
+        image={heroImage}
+        actions={(
+          <>
+            <a className="btn bg-accent text-ink-950 hover:-translate-y-0.5 hover:brightness-110" href="/#contact">Get guidance <ArrowUpRight /></a>
+            {officialSource && <a className="btn btn-ghost-light" href={officialSource} target="_blank" rel="noreferrer">Official source <ArrowUpRight /></a>}
+          </>
+        )}
+      />
 
       {facts.length > 0 && (
         <section className="shell relative -mt-14 sm:-mt-16">

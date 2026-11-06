@@ -43,6 +43,7 @@
   --color-gold-300: #f8dc8a;
   --color-gold-400: #f5d063;
   --color-gold-500: #e9b93a;
+  --color-accent: #cf8a17;
   --color-coral-50: #fdefee;
   --color-coral-100: #fadbd9;
   --color-coral-500: #db403c;
@@ -176,6 +177,11 @@
 /* ------------------------------------------------------------------
    Layout & typographic utilities
    ------------------------------------------------------------------ */
+/* Shared height of every photo hero: follows the screen, within limits. Long content may extend it. */
+@utility hero-photo {
+  min-height: clamp(34rem, 78svh, 42rem);
+}
+
 @utility shell {
   @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
 }
