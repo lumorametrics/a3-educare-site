@@ -37,13 +37,6 @@ const categoryTones = [
 ];
 
 const POPULAR_CATEGORY_SLUGS = ["engineering", "medical", "nursing", "management", "pharmacy"];
-const POPULAR_CATEGORY_COPY = {
-  engineering: "Build and design the technologies shaping tomorrow.",
-  medical: "Explore pathways into medicine, dentistry and healthcare.",
-  nursing: "Prepare for compassionate, hands-on careers in patient care.",
-  management: "Develop the business, leadership and digital skills employers value.",
-  pharmacy: "Discover science-led programmes in medicines and pharmaceutical care.",
-};
 
 function categoryImage(slug) {
   return withBase(`/hero/${slug}-1408.webp`);
@@ -127,7 +120,16 @@ function HomePage() {
       )?.slug;
       return POPULAR_CATEGORY_SLUGS.includes(slug);
     });
-    if (activeFilter === "All") return selected.slice(0, 10);
+    if (activeFilter === "All") {
+      return POPULAR_CATEGORY_SLUGS
+        .map((slug) => selected.find((course) => {
+          const category = categories.find((item) =>
+            [].concat(course.course_category || []).map(String).includes(String(item.id))
+          );
+          return (course.categorySlug || category?.slug) === slug;
+        }))
+        .filter(Boolean);
+    }
     return selected.filter((course) => {
       const category = categories.find((item) => [].concat(course.course_category || []).map(String).includes(String(item.id)));
       return category?.slug === activeFilter.toLowerCase();
@@ -180,24 +182,7 @@ function HomePage() {
               <button type="button" aria-pressed={activeFilter === filter} className={`chip shrink-0 ${activeFilter === filter ? "chip-active" : ""}`} key={filter} onClick={() => setActiveFilter(filter)}>{filter}</button>
             ))}
           </div>
-          {activeFilter === "All" ? (
-            <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Popular course categories">
-              {popularCategories.map((category, index) => (
-                <a
-                  className="group relative isolate min-h-40 overflow-hidden rounded-2xl border border-sand-200 bg-ink-900 p-5 text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift"
-                  href={`/courses/${encodeURIComponent(category.slug)}`}
-                  key={category.id}
-                >
-                  <span className="flex h-full flex-col justify-end">
-                    <span className="text-xs font-semibold tracking-[0.14em] text-gold-400 uppercase">Category {String(index + 1).padStart(2, "0")}</span>
-                    <strong className="mt-1 font-display text-xl">{category.name}</strong>
-                    <span className="mt-1 line-clamp-2 text-xs text-white/75">{POPULAR_CATEGORY_COPY[category.slug]}</span>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold-300">View courses <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" /></span>
-                  </span>
-                </a>
-              ))}
-            </div>
-          ) : isLoading("courses") ? <SkeletonGrid count={3} /> : popularCourses.length ? (
+          {isLoading("courses") ? <SkeletonGrid count={3} /> : popularCourses.length ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {popularCourses.map((course, index) => {
                 const name = categoryName(course);
