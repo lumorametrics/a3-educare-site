@@ -175,30 +175,31 @@ function HomePage() {
       <section className="section-y bg-white" id="popular-courses">
         <div className="shell">
           <SectionHeading eyebrow="Start exploring" title={<>Popular <em>Courses</em></>} description="Frequently explored degree programs across streams." action={<a className="link-arrow" href="/courses">View all courses <ArrowUpRight /></a>} />
-          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Popular course categories">
-            {popularCategories.map((category, index) => (
-              <a
-                className="group relative isolate min-h-40 overflow-hidden rounded-2xl border border-sand-200 bg-ink-900 p-5 text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift"
-                href={`/courses/${encodeURIComponent(category.slug)}`}
-                key={category.id}
-              >
-                <img src={categoryImage(category.slug)} alt="" loading="lazy" className="absolute inset-0 -z-10 size-full object-cover opacity-45 transition duration-500 group-hover:scale-105 group-hover:opacity-60" />
-                <span className="absolute inset-0 -z-10 bg-linear-to-t from-ink-950 via-ink-950/45 to-transparent" />
-                <span className="flex h-full flex-col justify-end">
-                  <span className="text-xs font-semibold tracking-[0.14em] text-gold-400 uppercase">Category {String(index + 1).padStart(2, "0")}</span>
-                  <strong className="mt-1 font-display text-xl">{category.name}</strong>
-                  <span className="mt-1 line-clamp-2 text-xs text-white/75">{POPULAR_CATEGORY_COPY[category.slug]}</span>
-                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold-300">View courses <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" /></span>
-                </span>
-              </a>
-            ))}
-          </div>
           <div className="mb-10 flex flex-wrap gap-2" role="group" aria-label="Popular course filters">
             {["All", ...popularCategories.map((category) => category.name)].map((filter) => (
               <button type="button" aria-pressed={activeFilter === filter} className={`chip shrink-0 ${activeFilter === filter ? "chip-active" : ""}`} key={filter} onClick={() => setActiveFilter(filter)}>{filter}</button>
             ))}
           </div>
-          {isLoading("courses") ? <SkeletonGrid count={3} /> : popularCourses.length ? (
+          {activeFilter === "All" ? (
+            <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Popular course categories">
+              {popularCategories.map((category, index) => (
+                <a
+                  className="group relative isolate min-h-40 overflow-hidden rounded-2xl border border-sand-200 bg-ink-900 p-5 text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift"
+                  href={`/courses/${encodeURIComponent(category.slug)}`}
+                  key={category.id}
+                >
+                  <img src={categoryImage(category.slug)} alt="" loading="lazy" className="absolute inset-0 -z-10 size-full object-cover opacity-45 transition duration-500 group-hover:scale-105 group-hover:opacity-60" />
+                  <span className="absolute inset-0 -z-10 bg-linear-to-t from-ink-950 via-ink-950/45 to-transparent" />
+                  <span className="flex h-full flex-col justify-end">
+                    <span className="text-xs font-semibold tracking-[0.14em] text-gold-400 uppercase">Category {String(index + 1).padStart(2, "0")}</span>
+                    <strong className="mt-1 font-display text-xl">{category.name}</strong>
+                    <span className="mt-1 line-clamp-2 text-xs text-white/75">{POPULAR_CATEGORY_COPY[category.slug]}</span>
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold-300">View courses <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" /></span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          ) : isLoading("courses") ? <SkeletonGrid count={3} /> : popularCourses.length ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {popularCourses.map((course, index) => {
                 const name = categoryName(course);
