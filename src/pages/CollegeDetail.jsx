@@ -54,7 +54,7 @@ function getSections(fields, college) {
     return source.map((section) => ({
       title: clean(section.title || section.heading || section.section_title),
       content: html(section.content || section.description || section.text),
-    })).filter((section) => section.title && section.content);
+    })).filter((section) => section.title && section.content && !/^contact(?:\s+info)?$/i.test(section.title));
   }
   const excluded = new Set([
     "college_overview", "college_short_introduction", "overview", "description",
@@ -62,6 +62,7 @@ function getSections(fields, college) {
     "admission_test", "admission_exam", "official_source", "official_website",
     "college_image", "college_banner", "campus_image", "featured_image", "image", "college_photo",
     "faqs", "faq", "college_faqs", "sections", "college_sections", "college_information",
+    "contact_details", "contact_info", "contact_information",
   ]);
   // Plain text fields (affiliation, entrance exams) get a label; rich text fields carry their own markup.
   const labelled = { affiliation: "Affiliation", entrance_exams: "Entrance exams" };
@@ -74,11 +75,10 @@ function getSections(fields, college) {
     ["Hostel", ["hostel_information"]],
     ["Placements", ["placement_information"]],
     ["Scholarships", ["scholarships"]],
-    ["Contact", ["contact_details"]],
   ].map(([title, keys]) => ({
     title,
     content: keys.filter((key) => fields[key]).map((key) => (labelled[key] ? `<p><strong>${labelled[key]}:</strong> ${html(fields[key])}</p>` : html(fields[key]))).join(""),
-  })).filter((section) => section.content);
+  })).filter((section) => section.content && !/^contact(?:\s+info)?$/i.test(section.title));
   if (curated.length) return curated;
   return Object.entries({ ...college, ...fields })
     .filter(([key, value]) => !excluded.has(key) && value !== null && value !== "" && value !== false)
