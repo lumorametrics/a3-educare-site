@@ -186,7 +186,10 @@ function HomePage() {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {popularCourses.map((course, index) => {
                 const name = categoryName(course);
-                const category = popularCategories.find((item) => item.name === name);
+                const slug = course.categorySlug || categories.find((item) =>
+                  [].concat(course.course_category || []).map(String).includes(String(item.id))
+                )?.slug;
+                const category = popularCategories.find((item) => item.slug === slug);
                 return <Reveal key={course.id} delay={(index % 3) * 80} className="h-full"><CourseCard course={course} index={index} categoryName={name} categoryImage={category ? categoryImage(category.slug) : undefined} hideImage={activeFilter === "All"} /></Reveal>;
               })}
             </div>
