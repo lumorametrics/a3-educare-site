@@ -181,15 +181,13 @@ function HomePage() {
             ))}
           </div>
           {activeFilter === "All" ? (
-            <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Popular course categories">
+            <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Popular course categories">
               {popularCategories.map((category, index) => (
                 <a
                   className="group relative isolate min-h-40 overflow-hidden rounded-2xl border border-sand-200 bg-ink-900 p-5 text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift"
                   href={`/courses/${encodeURIComponent(category.slug)}`}
                   key={category.id}
                 >
-                  <img src={categoryImage(category.slug)} alt="" loading="lazy" className="absolute inset-0 -z-10 size-full object-cover opacity-45 transition duration-500 group-hover:scale-105 group-hover:opacity-60" />
-                  <span className="absolute inset-0 -z-10 bg-linear-to-t from-ink-950 via-ink-950/45 to-transparent" />
                   <span className="flex h-full flex-col justify-end">
                     <span className="text-xs font-semibold tracking-[0.14em] text-gold-400 uppercase">Category {String(index + 1).padStart(2, "0")}</span>
                     <strong className="mt-1 font-display text-xl">{category.name}</strong>
