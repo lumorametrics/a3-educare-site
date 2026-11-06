@@ -187,7 +187,7 @@ function HomePage() {
               {popularCourses.map((course, index) => {
                 const name = categoryName(course);
                 const category = popularCategories.find((item) => item.name === name);
-                return <Reveal key={course.id} delay={(index % 3) * 80} className="h-full"><CourseCard course={course} index={index} categoryName={name} categoryImage={category ? categoryImage(category.slug) : undefined} /></Reveal>;
+                return <Reveal key={course.id} delay={(index % 3) * 80} className="h-full"><CourseCard course={course} index={index} categoryName={name} categoryImage={category ? categoryImage(category.slug) : undefined} hideImage={activeFilter === "All"} /></Reveal>;
               })}
             </div>
           ) : failed.courses ? loadError("Courses") : <StatusMessage>No published courses are available yet.</StatusMessage>}

@@ -14,7 +14,7 @@ const tones = [
   "bg-ink-50 text-ink-700",
 ];
 
-export default function CourseCard({ course, index = 0, categoryName, categoryImage }) {
+export default function CourseCard({ course, index = 0, categoryName, categoryImage, hideImage = false }) {
   const fields = course.acf || {};
   const title = course.title?.rendered || "Untitled course";
   const image = ["course_image", "course_banner", "course_cover", "hero_image", "featured_image", "image", "thumbnail"]
@@ -36,7 +36,7 @@ export default function CourseCard({ course, index = 0, categoryName, categoryIm
 
   return (
     <a href={href} className="group card-interactive flex h-full flex-col p-6 sm:p-7">
-      {image && (
+      {image && !hideImage && (
         <img
           src={image.src}
           srcSet={image.srcSet}
