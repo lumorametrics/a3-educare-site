@@ -20,6 +20,7 @@ import {
   getStudyAbroad,
 } from "../services/wordpress";
 import { toPlainText } from "../lib/text";
+import { withBase } from "../lib/basePath";
 
 const faqs = [
   ["How do I choose the right course?", "Start with your interests, academic strengths and long-term goals. Our advisors can help you compare eligibility, duration, fees and career outcomes."],
@@ -34,6 +35,19 @@ const categoryTones = [
   "from-coral-50 to-white text-coral-600",
   "from-ink-50 to-white text-ink-700",
 ];
+
+const POPULAR_CATEGORY_SLUGS = ["engineering", "medical", "nursing", "management", "pharmacy"];
+const POPULAR_CATEGORY_COPY = {
+  engineering: "Build and design the technologies shaping tomorrow.",
+  medical: "Explore pathways into medicine, dentistry and healthcare.",
+  nursing: "Prepare for compassionate, hands-on careers in patient care.",
+  management: "Develop the business, leadership and digital skills employers value.",
+  pharmacy: "Discover science-led programmes in medicines and pharmaceutical care.",
+};
+
+function categoryImage(slug) {
+  return withBase(`/hero/${slug}-1408.webp`);
+}
 
 function stripHtml(value = "") {
   return toPlainText(value);
@@ -94,16 +108,29 @@ function HomePage() {
     </StatusMessage>
   );
 
-  const categoryName = (course) =>
-    categories.find((item) => [].concat(course.course_category || []).includes(item.id))?.name;
+  const popularCategories = useMemo(
+    () => POPULAR_CATEGORY_SLUGS
+      .map((slug) => categories.find((item) => item.slug === slug))
+      .filter(Boolean),
+    [categories],
+  );
+
+  const categoryName = (course) => {
+    const category = categories.find((item) => [].concat(course.course_category || []).map(String).includes(String(item.id)));
+    return category?.name || course.course_category_name || course.category;
+  };
 
   const popularCourses = useMemo(() => {
-    const source = courses;
-    if (activeFilter === "All") return source.slice(0, 6);
-    return source.filter((course) => {
-      const name = course.course_category_name || course.category || "";
-      return name.toLowerCase().includes(activeFilter.toLowerCase()) ||
-        course.course_category?.some((id) => categories.find((item) => item.id === id)?.name === activeFilter);
+    const selected = courses.filter((course) => {
+      const slug = course.categorySlug || categories.find((item) =>
+        [].concat(course.course_category || []).map(String).includes(String(item.id))
+      )?.slug;
+      return POPULAR_CATEGORY_SLUGS.includes(slug);
+    });
+    if (activeFilter === "All") return selected.slice(0, 10);
+    return selected.filter((course) => {
+      const category = categories.find((item) => [].concat(course.course_category || []).map(String).includes(String(item.id)));
+      return category?.slug === activeFilter.toLowerCase();
     }).slice(0, 6);
   }, [courses, categories, activeFilter]);
 
@@ -148,14 +175,36 @@ function HomePage() {
       <section className="section-y bg-white" id="popular-courses">
         <div className="shell">
           <SectionHeading eyebrow="Start exploring" title={<>Popular <em>Courses</em></>} description="Frequently explored degree programs across streams." action={<a className="link-arrow" href="/courses">View all courses <ArrowUpRight /></a>} />
-          <div className="-mx-5 mb-10 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Popular course filters">
-            {["All", "Engineering", "Medical", "Management", "Nursing", "Law"].map((filter) => (
+          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Popular course categories">
+            {popularCategories.map((category, index) => (
+              <a
+                className="group relative isolate min-h-40 overflow-hidden rounded-2xl border border-sand-200 bg-ink-900 p-5 text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift"
+                href={`/courses/${encodeURIComponent(category.slug)}`}
+                key={category.id}
+              >
+                <img src={categoryImage(category.slug)} alt="" loading="lazy" className="absolute inset-0 -z-10 size-full object-cover opacity-45 transition duration-500 group-hover:scale-105 group-hover:opacity-60" />
+                <span className="absolute inset-0 -z-10 bg-linear-to-t from-ink-950 via-ink-950/45 to-transparent" />
+                <span className="flex h-full flex-col justify-end">
+                  <span className="text-xs font-semibold tracking-[0.14em] text-gold-400 uppercase">Category {String(index + 1).padStart(2, "0")}</span>
+                  <strong className="mt-1 font-display text-xl">{category.name}</strong>
+                  <span className="mt-1 line-clamp-2 text-xs text-white/75">{POPULAR_CATEGORY_COPY[category.slug]}</span>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold-300">View courses <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" /></span>
+                </span>
+              </a>
+            ))}
+          </div>
+          <div className="mb-10 flex flex-wrap gap-2" role="group" aria-label="Popular course filters">
+            {["All", ...popularCategories.map((category) => category.name)].map((filter) => (
               <button type="button" aria-pressed={activeFilter === filter} className={`chip shrink-0 ${activeFilter === filter ? "chip-active" : ""}`} key={filter} onClick={() => setActiveFilter(filter)}>{filter}</button>
             ))}
           </div>
           {isLoading("courses") ? <SkeletonGrid count={3} /> : popularCourses.length ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {popularCourses.map((course, index) => <Reveal key={course.id} delay={(index % 3) * 80} className="h-full"><CourseCard course={course} index={index} categoryName={categoryName(course)} /></Reveal>)}
+              {popularCourses.map((course, index) => {
+                const name = categoryName(course);
+                const category = popularCategories.find((item) => item.name === name);
+                return <Reveal key={course.id} delay={(index % 3) * 80} className="h-full"><CourseCard course={course} index={index} categoryName={name} categoryImage={category ? categoryImage(category.slug) : undefined} /></Reveal>;
+              })}
             </div>
           ) : failed.courses ? loadError("Courses") : <StatusMessage>No published courses are available yet.</StatusMessage>}
         </div>

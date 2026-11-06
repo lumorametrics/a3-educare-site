@@ -168,6 +168,8 @@ const COURSE_CARD_FIELDS = [
   "id", "slug", "title", "excerpt", "course_category",
   "acf.course_short_introduction", "acf.course_overview", "acf.duration", "acf.course_duration",
   "acf.fees_information", "acf.course_fee", "acf.course_price",
+  "acf.course_image", "acf.course_banner", "acf.course_cover", "acf.hero_image",
+  "acf.featured_image", "acf.image", "acf.thumbnail",
 ].join(",");
 const COLLEGE_CARD_FIELDS = [
   "id", "slug", "title",
@@ -189,7 +191,7 @@ async function withCourseCategorySlug(items) {
 }
 
 export function getCourses(params = {}) {
-  return getCollection("courses", { _fields: COURSE_CARD_FIELDS, ...params }, { all: true }).then(withCourseCategorySlug);
+  return getCollection("courses", { _fields: COURSE_CARD_FIELDS, _embed: "wp:featuredmedia", ...params }, { all: true }).then(withCourseCategorySlug);
 }
 
 export function getCourseBySlug(slug) {
