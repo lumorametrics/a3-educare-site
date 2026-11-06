@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,23 +11,23 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="A3 EduCare Hub | Find your next chapter" />
     <meta property="og:description" content="Compare courses, shortlist trusted colleges and discover study-abroad opportunities with clear, practical guidance." />
-    <meta property="og:image" content="%BASE_URL%og-image.png" />
+    <meta property="og:image" content="/a3-educare-site/og-image.png" />
     <meta name="twitter:card" content="summary" />
 
-    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/a3-educare-site/favicon-64.png" />
+    <link rel="apple-touch-icon" href="/a3-educare-site/apple-touch-icon.png" />
 
     <!-- Warm up connections: WordPress serves the API (CORS) and the uploaded images (no-CORS). -->
-    <link rel="preconnect" href="%WP_ORIGIN%" crossorigin />
-    <link rel="preconnect" href="%WP_ORIGIN%" />
-    <link rel="dns-prefetch" href="%WP_ORIGIN%" />
+    <link rel="preconnect" href="https://staging.a3educarehub.in" crossorigin />
+    <link rel="preconnect" href="https://staging.a3educarehub.in" />
+    <link rel="dns-prefetch" href="https://staging.a3educarehub.in" />
     <!-- Home page only: fetch the first hero slide image right away instead of after the page's JS
          chunk loads (it is the largest element on screen). Matches the <picture> in HeroSlider.jsx. -->
     <script>
-      if (location.pathname === "%BASE_URL%") {
+      if (location.pathname === "/a3-educare-site/") {
         [
-          { media: "(max-width: 639px)", href: "%BASE_URL%hero/academic-mobile.webp" },
-          { media: "(min-width: 640px)", href: "%BASE_URL%hero/academic-1408.webp", srcset: "%BASE_URL%hero/academic-1024.webp 1024w, %BASE_URL%hero/academic-1408.webp 1408w" },
+          { media: "(max-width: 639px)", href: "/a3-educare-site/hero/academic-mobile.webp" },
+          { media: "(min-width: 640px)", href: "/a3-educare-site/hero/academic-1408.webp", srcset: "/a3-educare-site/hero/academic-1024.webp 1024w, /a3-educare-site/hero/academic-1408.webp 1408w" },
         ].forEach(function (image) {
           var link = document.createElement("link");
           link.rel = "preload";
@@ -61,12 +61,14 @@
         "alternateName": "A3 Educare Hub & Research Academy",
         "description": "Independent guidance on courses, colleges and career pathways for Indian students, and students exploring study abroad.",
         "email": "hello@a3educarehub.in",
-        "logo": "%BASE_URL%a3-educare-logo.png"
+        "logo": "/a3-educare-site/a3-educare-logo.png"
       }
     </script>
+    <script type="module" crossorigin src="/a3-educare-site/assets/index-Cdj7KO2T.js"></script>
+    <link rel="modulepreload" crossorigin href="/a3-educare-site/assets/jsx-runtime-IzPD2q5l.js">
+    <link rel="stylesheet" crossorigin href="/a3-educare-site/assets/index-B8Wmb4vn.css">
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div id="root"></div>
   </body>
 </html>

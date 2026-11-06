@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://lumorametrics.github.io/a3-educare-site/sitemap.xml

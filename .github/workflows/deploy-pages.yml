@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: deploy-site
@@ -24,10 +24,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Restore Vite source entrypoint
+        run: cp index.source.html index.html
       - run: npm run build
         env:
           VITE_BASE_PATH: /a3-educare-site/
-          VITE_PREVIEW_NOINDEX: 'true'
+          VITE_SITE_URL: https://lumorametrics.github.io/a3-educare-site
       - name: Prepare the site files
         run: |
           # GitHub Pages serves 404.html for addresses it has no file for, so direct links reach the app.
@@ -39,22 +41,11 @@ jobs:
           found=$(find dist -type f \( -name '*.map' -o -name '.env*' -o -name '*.jsx' -o -name '*.pem' -o -name '*.key' \))
           if [ -n "$found" ]; then echo "$found"; exit 1; fi
       - name: Publish to the public repository
-        env:
-          SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$SITE_DEPLOY_KEY" > ~/.ssh/site_deploy_key
-          chmod 600 ~/.ssh/site_deploy_key
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          export GIT_SSH_COMMAND="ssh -i ~/.ssh/site_deploy_key -o IdentitiesOnly=yes"
-          git clone --depth 1 git@github.com:lumorametrics/a3-educare-site.git site
-          cd site
-          git checkout -B main
-          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -a ../dist/. .
+          cp -a dist/. .
           git add -A
           if git diff --cached --quiet; then echo "No changes to publish"; exit 0; fi
           git config user.name "a3-site-deploy"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Update website build"
-          git push origin main
+          git push
