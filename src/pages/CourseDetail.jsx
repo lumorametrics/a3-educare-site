@@ -62,7 +62,7 @@ function collectApiFields(course, fields) {
     "type", "link", "template", "guid", "title", "content", "excerpt",
     "author", "featured_media", "parent", "menu_order", "comment_status",
     "ping_status", "sticky", "format", "acf", "class_list", "_links", "_embedded",
-    "category", "course_category", "categories",
+    "category", "course_category", "categories", "categorySlug",
   ]);
   return [
     ...Object.entries(course)
