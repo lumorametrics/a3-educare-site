@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { peekSeed, revalidateAfterLoad } from "../lib/seed";
 import {
   getColleges,
   getDistricts,
@@ -137,7 +138,7 @@ function StateDirectory({ items, status }) {
           </div>
         )}
       </section>
-      <CtaBand eyebrow="Continue exploring" title={<>Find Courses <em>Across India</em></>} description="Explore courses, colleges and education options with A3 Educare Hub." actionLabel="Explore Courses" actionHref="/courses" />
+      <CtaBand eyebrow="Continue exploring" title={<>Find Courses <em>Across India</em></>} description="Explore courses, colleges and education options with A3 Educare Hub & Research Academy." actionLabel="Explore Courses" actionHref="/courses" />
     </main>
   );
 }
@@ -201,7 +202,7 @@ function CollegeDirectory({ items, status }) {
                 <p className="eyebrow mb-3">Keep exploring</p>
                 <h2 className="heading-display text-3xl sm:text-4xl">More institutions to <em>explore.</em></h2>
               </div>
-              <p className="max-w-md text-ink-500">Browse the complete college inventory from A3 Educare Hub. Select an institution to view its published profile and admissions information.</p>
+              <p className="max-w-md text-ink-500">Browse the complete college inventory from A3 Educare Hub & Research Academy. Select an institution to view its published profile and admissions information.</p>
             </div>
           )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -229,21 +230,26 @@ function CollegeDirectory({ items, status }) {
 
 export default function CollectionDirectory({ type }) {
   const config = collections[type] || collections.states;
-  const [items, setItems] = useState([]);
-  const [status, setStatus] = useState("loading");
+  // Colleges: the build embeds the list, so the first render already shows the cards (see lib/seed.js).
+  const seeded = type === "colleges" ? peekSeed("colleges") : undefined;
+  const [items, setItems] = useState(seeded || []);
+  const [status, setStatus] = useState(seeded ? "ready" : "loading");
   const [query, setQuery] = useState("");
   const [stateFilter, setStateFilter] = useState("all");
 
   useEffect(() => {
     let active = true;
-    config.getItems()
+    const load = () => config.getItems()
       .then((data) => {
         if (!active) return;
         setItems(data);
         setStatus("ready");
       })
-      .catch(() => active && setStatus("error"));
-    return () => { active = false; };
+      .catch(() => active && setStatus((current) => (current === "ready" ? current : "error")));
+    // With a seed the live list is fetched after the page has loaded and replaces the seed; otherwise fetch now.
+    const cancel = seeded && type === "colleges" ? revalidateAfterLoad(load) : (load(), undefined);
+    return () => { active = false; cancel?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, type]);
 
   if (type === "colleges") {

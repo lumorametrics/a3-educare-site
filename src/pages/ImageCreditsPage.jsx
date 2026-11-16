@@ -8,6 +8,7 @@ import { useSeo } from "../lib/seo";
 import { toPlainText } from "../lib/text";
 import { getCreditedMedia } from "../services/wordpress";
 import { HERO_SLIDES } from "../components/home/heroSlides";
+import { withBase } from "../lib/basePath";
 
 /** One entry per source photo: the media library can hold the same Commons file more than once. */
 function creditEntries(media) {
@@ -24,7 +25,7 @@ function creditEntries(media) {
     });
   });
   HERO_SLIDES.forEach((slide) => {
-    bySource.set(slide.credit.sourceUrl, { id: `hero-${slide.image}`, name: `Home page banner: ${slide.eyebrow}`, credit: slide.credit, thumbnail: `/hero/${slide.image}-mobile.webp` });
+    bySource.set(slide.credit.sourceUrl, { id: `hero-${slide.image}`, name: `Home page banner: ${slide.eyebrow}`, credit: slide.credit, thumbnail: withBase(`/hero/${slide.image}-mobile.webp`) });
   });
   return [...bySource.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

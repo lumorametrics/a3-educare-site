@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { getCollegeBySlug } from "../services/wordpress";
+import { peekSeed, revalidateAfterLoad } from "../lib/seed";
 import SplashScreen from "../components/ui/SplashScreen";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import FaqAccordion from "../components/ui/FaqAccordion";
 import StatusMessage from "../components/ui/StatusMessage";
-import CtaBand from "../components/ui/CtaBand";
+import CollegeApplyCta from "../components/college/CollegeApplyCta";
 import Reveal from "../components/ui/Reveal";
 import CollegeHeroBackdrop from "../components/college/CollegeHeroBackdrop";
 
 import { ArrowUpRight, Award, Building, Graduation, MapPin } from "../components/ui/Icons";
-import { resolveCollegeImage } from "../lib/collegeImage";
+import { resolveCollegeImage, resolveOwnCollegeImage } from "../lib/collegeImage";
 import { toPlainText, truncateText } from "../lib/text";
 import { useSeo } from "../lib/seo";
 
@@ -92,13 +93,15 @@ function getSections(fields, college) {
 
 
 export default function CollegeDetail({ slug }) {
-  const [college, setCollege] = useState(null);
-  const [status, setStatus] = useState("loading");
+  // The build embeds this college for its own page, so the first render shows it at once (see lib/seed.js).
+  const seeded = peekSeed(`college:${slug}`)?.[0] || null;
+  const [college, setCollege] = useState(seeded);
+  const [status, setStatus] = useState(seeded ? "ready" : "loading");
   const [failedPhoto, setFailedPhoto] = useState(null); // src of a hero photo that did not load
 
   useEffect(() => {
     let active = true;
-    getCollegeBySlug(slug)
+    const load = () => getCollegeBySlug(slug)
       .then((items) => {
         if (!active) return;
         setCollege(items[0] || null);
@@ -107,15 +110,18 @@ export default function CollegeDetail({ slug }) {
       .catch((requestError) => {
         if (!active) return;
         console.error("Unable to load college details:", requestError);
-        setStatus("error");
+        setStatus((current) => (current === "ready" ? current : "error"));
       });
-    return () => { active = false; };
+    // With a seed the live record is fetched after the page has loaded and replaces the seed; otherwise fetch now.
+    const cancel = seeded && seeded.slug === slug ? revalidateAfterLoad(load) : (load(), undefined);
+    return () => { active = false; cancel?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   useSeo(college ? {
     title: toPlainText(college.title?.rendered),
     description: college.acf?.college_short_introduction || college.acf?.college_overview,
-    image: resolveCollegeImage(college.acf || {})?.src,
+    image: resolveOwnCollegeImage(college.acf || {})?.src,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "CollegeOrUniversity",
@@ -143,7 +149,6 @@ export default function CollegeDetail({ slug }) {
   const type = clean(field(fields, ["college_type", "type"], "Not published"));
   const established = clean(field(fields, ["established", "established_date", "foundation_date"], "Not published"));
   const admissionTest = clean(field(fields, ["admission_test", "admission_exam", "entrance_exam", "entrance_exams"], "Not published"));
-  const officialSource = field(fields, ["official_source", "official_website", "website"]);
   const sections = getSections(fields, college);
   const faqs = getFaqs(fields);
   const relatedCourses = field(fields, ["related_courses", "college_courses", "courses"]);
@@ -173,7 +178,6 @@ export default function CollegeDetail({ slug }) {
             {overview && <div className="mt-5 line-clamp-4 max-w-2xl text-base leading-relaxed text-white/85 sm:line-clamp-5 sm:text-lg [&_p]:m-0" dangerouslySetInnerHTML={{ __html: html(overview) }} />}
             <div className="mt-8 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap">
               <a className="btn bg-accent text-ink-950 hover:-translate-y-0.5 hover:brightness-110" href="/#contact">Get admission guidance <ArrowUpRight /></a>
-              {officialSource && <a className="btn btn-ghost-light" href={officialSource} target="_blank" rel="noreferrer">Official website <ArrowUpRight /></a>}
             </div>
             {image?.credit?.note && failedPhoto !== image.src && (
               <p className="mt-8 max-w-xl text-xs leading-relaxed text-white/70">
@@ -224,21 +228,6 @@ export default function CollegeDetail({ slug }) {
         </section>
       )}
 
-      {fields.information_sources && (
-        <section className="shell pb-8">
-          <div className="wp-content text-sm text-ink-500" dangerouslySetInnerHTML={{ __html: html(fields.information_sources) }} />
-        </section>
-      )}
-
-      {officialSource && (
-        <section className="shell pb-16">
-          <Reveal className="flex flex-col gap-4 rounded-2xl border border-gold-300 bg-gold-100/60 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-            <p className="max-w-2xl text-sm text-ink-700">Fees, cutoffs, rankings, and facilities change frequently and are best confirmed on the institution’s own official website.</p>
-            <a className="btn btn-dark shrink-0" href={officialSource} target="_blank" rel="noreferrer">Visit official website <ArrowUpRight /></a>
-          </Reveal>
-        </section>
-      )}
-
       {Array.isArray(relatedCourses) && relatedCourses.length > 0 && (
         <section className="shell pb-16">
           <h2 className="heading-display mb-6 text-3xl">Related <em>Courses</em></h2>
@@ -266,7 +255,14 @@ export default function CollegeDetail({ slug }) {
       )}
 
       <div className={faqs.length > 0 ? "pt-20 sm:pt-24" : ""}>
-        <CtaBand eyebrow="Admissions guidance" title={clean(fields.cta_heading) || <>Considering <em>{title}?</em></>} description={clean(fields.cta_description) || "Confirm admission details on the official website before applying — and talk to us for a personalised plan."} actionLabel="Apply Now" />
+        <CollegeApplyCta
+          title={title}
+          heading={clean(fields.cta_heading) || <>Considering <span className="text-gold-400">{title}?</span></>}
+          description={clean(fields.cta_description) || "Confirm admission details on the official website before applying — and talk to us for a personalised plan."}
+          image={image}
+          location={hasLocation ? location : ""}
+          admissionTest={admissionTest !== "Not published" ? admissionTest : ""}
+        />
       </div>
     </main>
   );

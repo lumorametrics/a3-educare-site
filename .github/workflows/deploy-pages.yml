@@ -6,6 +6,14 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # WordPress asks for a rebuild when public content changes (see a3-rest-performance.php in the theme / the
+  # a3-educare-performance plugin; it needs A3_REBUILD_REPO and A3_REBUILD_TOKEN in wp-config.php).
+  repository_dispatch:
+    types: [wordpress-content-updated]
+  # Safety net: pages embed build-time WordPress data, so rebuild regularly even if no trigger arrives. The live app
+  # still refreshes from WordPress after load, so this only bounds how old the first paint can be.
+  schedule:
+    - cron: "17 */6 * * *"
 
 permissions:
   contents: write
@@ -33,7 +41,8 @@ jobs:
       - name: Prepare the site files
         run: |
           # GitHub Pages serves 404.html for addresses it has no file for, so direct links reach the app.
-          cp dist/index.html dist/404.html
+          # The build already wrote a clean 404.html (the plain app shell); only create one if it is missing.
+          test -f dist/404.html || cp dist/index.html dist/404.html
           # Serve the files exactly as built, without Jekyll processing.
           touch dist/.nojekyll
       - name: Stop if the build contains source or secret files

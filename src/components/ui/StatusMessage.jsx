@@ -17,7 +17,7 @@ export default function StatusMessage({ children, tone = "neutral", title, actio
         error ? "border-coral-100 bg-coral-50/60 text-coral-600" : "border-sand-200 bg-white/70 text-ink-500"
       }`}
     >
-      {title && <strong className="font-display text-xl text-ink-900">{title}</strong>}
+      {title && (page ? <h1 className="font-display text-xl font-bold text-ink-900">{title}</h1> : <strong className="font-display text-xl text-ink-900">{title}</strong>)}
       <div className="text-sm leading-relaxed">{children}</div>
       {action}
     </div>

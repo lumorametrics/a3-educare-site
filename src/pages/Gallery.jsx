@@ -100,7 +100,7 @@ function getGalleryImages(page) {
     if (!url) return "";
     return url.replace(/-\d+x\d+(?=\.[a-z0-9]+$)/i, "");
   };
-  const addImage = (image, fallbackAlt = "A3 Educare Hub gallery image") => {
+  const addImage = (image, fallbackAlt = "A3 Educare Hub & Research Academy gallery image") => {
     const url = getBestImageUrl(image);
     if (!url || images.some((item) => item.url === url)) return;
     images.push({
@@ -111,7 +111,7 @@ function getGalleryImages(page) {
     });
   };
 
-  page._embedded?.["wp:featuredmedia"]?.forEach((image) => addImage(image, "A3 Educare Hub featured image"));
+  page._embedded?.["wp:featuredmedia"]?.forEach((image) => addImage(image, "A3 Educare Hub & Research Academy featured image"));
   const content = page.content?.rendered || "";
   if (typeof DOMParser !== "undefined") {
     const document = new DOMParser().parseFromString(content, "text/html");
@@ -208,7 +208,7 @@ export default function Gallery() {
 
   const title = stripMarkup(page?.title?.rendered) || "Gallery";
   const content = page?.content?.rendered || "";
-  const intro = stripMarkup(page?.excerpt?.rendered) || "A glimpse into the people, moments and learning journeys that make A3 Educare Hub meaningful.";
+  const intro = stripMarkup(page?.excerpt?.rendered) || "A glimpse into the people, moments and learning journeys that make A3 Educare Hub & Research Academy meaningful.";
 
   if (status === "loading") return <SplashScreen label="Loading gallery" />;
   if (status === "error") return <StatusMessage page tone="error">The Gallery could not be loaded from WordPress.</StatusMessage>;
@@ -226,7 +226,7 @@ export default function Gallery() {
         <section className="shell section-y">
           <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="eyebrow mb-3">Inside A3 Educare Hub</p>
+              <p className="eyebrow mb-3">Inside A3 Educare Hub & Research Academy</p>
               <h2 className="heading-display text-3xl sm:text-4xl">Stories in <em>every frame.</em></h2>
             </div>
             <p className="max-w-md text-ink-500">Explore our gallery and discover the people, places and experiences behind our education community.</p>
@@ -264,7 +264,7 @@ export default function Gallery() {
                           sizes={image.srcSet ? "(min-width: 1536px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw" : undefined}
                           width={image.width}
                           height={image.height}
-                          alt={image.alt === "A3 Educare Hub gallery image" ? `${image.alt} ${index + 1}` : image.alt}
+                          alt={image.alt === "A3 Educare Hub & Research Academy gallery image" ? `${image.alt} ${index + 1}` : image.alt}
                           loading={index < columns.length ? "eager" : "lazy"}
                         />
                       </span>

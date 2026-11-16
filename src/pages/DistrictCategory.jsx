@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCollegeIndex, getCourseCategories, getCourses, getDistrictBySlug, getStateBySlug, withCollegeListingDetails } from "../services/wordpress";
+import { getCollegeIndex, getCourseCategories, getCategoryContent, getCategoryImage, getCourses, getDistrictBySlug, getStateBySlug, withCollegeListingDetails } from "../services/wordpress";
 import CollegeCategoryPage from "../components/college/CollegeCategoryPage";
 import SplashScreen from "../components/ui/SplashScreen";
 import StatusMessage from "../components/ui/StatusMessage";
@@ -26,9 +26,9 @@ export default function DistrictCategory({ stateSlug, districtSlug, categorySlug
         const localIds = new Set(local.map((college) => college.id));
         const stateName = toPlainText(state.title?.rendered);
         const inState = colleges.filter((college) => sameName(college.acf?.state, stateName) && !localIds.has(college.id) && collegeCategorySlugs(college, categories).includes(categorySlug));
-        const [matching, elsewhere] = await Promise.all([withCollegeListingDetails(local), withCollegeListingDetails(inState.slice(0, 6))]);
+        const [categoryImage, matching, elsewhere] = await Promise.all([getCategoryImage(courses, categorySlug), withCollegeListingDetails(local), withCollegeListingDetails(inState.slice(0, 6))]);
         if (!active) return;
-        setData({ district, state, category, categories, counts, matching, elsewhere, stateTotal: inState.length, courses });
+        setData({ district, state, category, categories, counts, matching, elsewhere, stateTotal: inState.length, courses, categoryImage });
         setStatus("ready");
       })
       .catch((error) => {
@@ -62,7 +62,8 @@ export default function DistrictCategory({ stateSlug, districtSlug, categorySlug
   if (status === "error") return <StatusMessage page tone="error" title="Something went wrong">This page could not be loaded from WordPress.</StatusMessage>;
   if (status === "not-found") return <StatusMessage page title="Page not found" action={<a className="btn btn-dark mt-2" href="/states">All states</a>}>This district or course category could not be found.</StatusMessage>;
 
-  const { district, state, category, categories, counts, matching, elsewhere, stateTotal, courses } = data;
+  const { district, state, category, categories, counts, matching, elsewhere, stateTotal, courses, categoryImage } = data;
+  const categoryContent = getCategoryContent(category);
   const fields = district.acf || {};
   const hasOwnImage = fields.district_image && typeof fields.district_image === "object";
   return (
@@ -74,9 +75,10 @@ export default function DistrictCategory({ stateSlug, districtSlug, categorySlug
       placeName={districtName}
       categoryName={categoryName}
       categorySlug={categorySlug}
+      categoryContent={categoryContent}
       placeIntro={toPlainText(fields.district_summary) || toPlainText(fields.district_short_introduction)}
-      image={hasOwnImage ? fields.district_image : state.acf?.state_image}
-      imageAlt={hasOwnImage ? districtName : stateName}
+      image={categoryContent.image || categoryImage || (hasOwnImage ? fields.district_image : state.acf?.state_image)}
+      imageAlt={categoryContent.image || categoryImage ? `${categoryName} study` : hasOwnImage ? districtName : stateName}
       colleges={matching}
       elsewhere={elsewhere}
       elsewhereTitle={<>{categoryName} colleges elsewhere in <em>{stateName}</em></>}

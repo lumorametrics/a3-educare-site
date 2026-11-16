@@ -1,4 +1,4 @@
-# A3 Educare Hub
+# A3 Educare Hub & Research Academy
 
 Responsive React/Vite frontend for an education consultancy, designed for a headless WordPress + ACF backend.
 

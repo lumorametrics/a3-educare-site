@@ -8,6 +8,7 @@ import StatusMessage from "../components/ui/StatusMessage";
 import CtaBand from "../components/ui/CtaBand";
 import { ChevronLeft, ChevronRight, Search } from "../components/ui/Icons";
 import { getCourseCategories, getCourses } from "../services/wordpress";
+import { useSeo } from "../lib/seo";
 
 const PAGE_SIZE = 9;
 
@@ -86,6 +87,13 @@ export default function CourseDirectory({ category: initialCategory }) {
       return matchesSearch && matchesCategory;
     });
   }, [category, categories, courses, search]);
+
+  // /courses/<category> gets its own title and description; /courses keeps the route default.
+  const seoCategory = categories.find((item) => item.slug === category);
+  useSeo(seoCategory ? {
+    title: `${seoCategory.name} Courses in India`,
+    description: `Explore ${filteredCourses.length} ${String(seoCategory.name).toLowerCase()} ${filteredCourses.length === 1 ? "course" : "courses"} in India: duration, eligibility, fees and career options from A3 EduCare Hub.`,
+  } : category === "all" && categoryStatus !== "loading" ? { title: "Courses", description: "Explore courses in India by category — duration, eligibility, fees and career outcomes." } : null);
 
   const pageCount = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
   const visibleCourses = filteredCourses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

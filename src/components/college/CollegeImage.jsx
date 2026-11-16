@@ -3,34 +3,16 @@ import { useEffect, useRef, useState } from "react";
 // How much of the photo may be cropped away by object-cover before it is shown whole instead.
 const MAX_CROP = 0.35;
 
-/** Neutral campus drawing for colleges that have neither featured_image nor college_image. */
-function Placeholder({ alt, className }) {
-  return (
-    <span
-      role={alt ? "img" : undefined}
-      aria-label={alt || undefined}
-      aria-hidden={alt ? undefined : true}
-      className={`relative isolate grid place-items-center overflow-hidden bg-linear-to-br from-brand-50 via-white to-sand-100 ${className}`}
-    >
-      <span aria-hidden="true" className="absolute -top-8 -right-8 size-32 rounded-full bg-brand-100/80 blur-2xl" />
-      <span aria-hidden="true" className="absolute -bottom-10 -left-8 size-32 rounded-full bg-gold-100/80 blur-2xl" />
-      <svg aria-hidden="true" viewBox="0 0 200 120" className="relative h-[52%] max-h-40 min-h-8 w-auto text-brand-600" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M24 106h152" />
-        <path d="M44 106V60h112v46" />
-        <path d="M34 60 100 28l66 32z" />
-        <path d="M66 72v34M86 72v34M114 72v34M134 72v34" opacity=".55" />
-        <path d="M92 106V88h16v18" />
-        <circle cx="100" cy="46" r="5" />
-      </svg>
-    </span>
-  );
+/** Neutral frame shown only while a college has no image record or its file fails to load: no text, no stand-in photo. */
+function EmptyFrame({ className }) {
+  return <span aria-hidden="true" className={`block bg-sand-100 ${className}`} />;
 }
 
 /**
  * A college photo that fits its frame. `className` sizes the frame (aspect ratio, radius); `ratio` is that
  * frame's width / height. Photos that cover the frame with little cropping use object-cover; portrait and
  * very wide ones are shown whole over a blurred copy of themselves instead of being cut off.
- * No `image` (or one that fails to load) shows the placeholder. Lazy by default; `priority` for the
+ * No `image` (or one that fails to load) leaves a plain neutral frame. Lazy by default; `priority` for the
  * first image on a page. `alt` is empty for card photos, whose link already names the college.
  */
 export default function CollegeImage({ image, alt = "", ratio = 4 / 3, className = "", sizes, zoom = false, priority = false }) {
@@ -44,7 +26,7 @@ export default function CollegeImage({ image, alt = "", ratio = 4 / 3, className
     if (src && ref.current?.complete && ref.current.naturalWidth) setLoadedSrc(src);
   }, [src]);
 
-  if (!src || failedSrc === src) return <Placeholder alt={alt} className={className} />;
+  if (!src || failedSrc === src) return <EmptyFrame className={className} />;
 
   const loaded = loadedSrc === src;
   const imageRatio = image.width && image.height ? image.width / image.height : null;

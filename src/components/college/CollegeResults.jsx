@@ -70,7 +70,7 @@ export default function CollegeResults({ colleges }) {
       )}
       <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {results.slice(0, visible).map((college, index) => (
-          <Reveal as="li" key={college.id} delay={(index % 3) * 70} className="h-full"><CollegeCard college={college} showDetails /></Reveal>
+          <Reveal as="li" key={college.id} delay={(index % 3) * 70} className="h-full"><CollegeCard college={college} showDetails showApply /></Reveal>
         ))}
       </ul>
       {results.length > visible && (

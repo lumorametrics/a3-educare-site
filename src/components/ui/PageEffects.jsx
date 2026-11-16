@@ -59,7 +59,7 @@ export default function PageEffects() {
   return (
     <>
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-0.5">
-        <div ref={barRef} className="h-full origin-left scale-x-0 bg-linear-to-r from-brand-500 via-brand-400 to-gold-400" />
+        <div ref={barRef} style={{ transform: "scaleX(0)" }} className="h-full origin-left bg-linear-to-r from-brand-500 via-brand-400 to-gold-400" />
       </div>
       <button
         type="button"

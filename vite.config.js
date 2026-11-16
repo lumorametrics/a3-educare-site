@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
+import routeShells from './scripts/routeShells.js'
 
 const DEFAULT_WP_API = 'https://staging.a3educarehub.in/wp-json/wp/v2'
 
@@ -97,10 +98,12 @@ function wordpressSeo(env) {
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
+  // Empty for the domain root; set VITE_BASE_PATH when hosting under a sub-path (GitHub Pages).
+  const base = process.env.VITE_BASE_PATH || env.VITE_BASE_PATH || '/'
   return {
-    // Empty for the domain root; set VITE_BASE_PATH when hosting under a sub-path (GitHub Pages).
-    base: process.env.VITE_BASE_PATH || env.VITE_BASE_PATH || '/',
-    plugins: [react(), tailwindcss(), wordpressSeo(env)],
+    base,
+    // routeShells writes the per-route HTML (preloads + build-time data); it never changes the app itself.
+    plugins: [react(), tailwindcss(), wordpressSeo(env), routeShells({ mode, base })],
     server: {
       proxy: {
         '/wp-api': {

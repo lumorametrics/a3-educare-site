@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCollegeIndex, getCourseCategories, getCourses, getStateBySlug, withCollegeListingDetails } from "../services/wordpress";
+import { getCollegeIndex, getCourseCategories, getCategoryContent, getCategoryImage, getCourses, getStateBySlug, withCollegeListingDetails } from "../services/wordpress";
 import CollegeCategoryPage from "../components/college/CollegeCategoryPage";
 import SplashScreen from "../components/ui/SplashScreen";
 import StatusMessage from "../components/ui/StatusMessage";
@@ -25,9 +25,9 @@ export default function StateCategory({ stateSlug, categorySlug }) {
         const local = inState.filter((college) => collegeCategorySlugs(college, categories).includes(categorySlug));
         // Only used when the state has none: the same category's colleges in other states, capped so the page stays light.
         const others = local.length ? [] : colleges.filter((college) => collegeCategorySlugs(college, categories).includes(categorySlug)).slice(0, 6);
-        const [matching, elsewhere] = await Promise.all([withCollegeListingDetails(local), withCollegeListingDetails(others)]);
+        const [categoryImage, matching, elsewhere] = await Promise.all([getCategoryImage(courses, categorySlug), withCollegeListingDetails(local), withCollegeListingDetails(others)]);
         if (!active) return;
-        setData({ state, category, categories, counts, matching, elsewhere, courses });
+        setData({ state, category, categories, counts, matching, elsewhere, courses, categoryImage });
         setStatus("ready");
       })
       .catch((error) => {
@@ -54,7 +54,8 @@ export default function StateCategory({ stateSlug, categorySlug }) {
   if (status === "error") return <StatusMessage page tone="error" title="Something went wrong">This page could not be loaded from WordPress.</StatusMessage>;
   if (status === "not-found") return <StatusMessage page title="Page not found" action={<a className="btn btn-dark mt-2" href="/states">All states</a>}>This state or course category could not be found.</StatusMessage>;
 
-  const { state, category, categories, counts, matching, elsewhere, courses } = data;
+  const { state, category, categories, counts, matching, elsewhere, courses, categoryImage } = data;
+  const categoryContent = getCategoryContent(category);
   return (
     <CollegeCategoryPage
       breadcrumb={breadcrumb}
@@ -64,9 +65,10 @@ export default function StateCategory({ stateSlug, categorySlug }) {
       placeName={stateName}
       categoryName={categoryName}
       categorySlug={categorySlug}
+      categoryContent={categoryContent}
       placeIntro={toPlainText(state.acf?.state_short_introduction)}
-      image={state.acf?.state_image}
-      imageAlt={stateName}
+      image={categoryContent.image || categoryImage || state.acf?.state_image}
+      imageAlt={categoryContent.image || categoryImage ? `${categoryName} study` : stateName}
       colleges={matching}
       elsewhere={elsewhere}
       elsewhereTitle={<>{categoryName} colleges in <em>other states</em></>}

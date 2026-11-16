@@ -44,7 +44,7 @@ export default function CourseCard({ course, index = 0, categoryName, categoryIm
           alt={image.alt}
           loading="lazy"
           decoding="async"
-          className="-mx-6 -mt-6 mb-6 aspect-[16/9] w-[calc(100%+3rem)] rounded-t-2xl object-cover transition duration-500 group-hover:scale-[1.02] sm:-mx-7 sm:-mt-7 sm:mb-7 sm:w-[calc(100%+3.5rem)]"
+          className="-mx-6 -mt-6 mb-6 aspect-[16/9] w-[calc(100%_+_3rem)] max-w-none rounded-t-2xl object-cover transition duration-500 group-hover:scale-[1.02] sm:-mx-7 sm:-mt-7 sm:mb-7 sm:w-[calc(100%_+_3.5rem)]"
         />
       )}
       <div className="flex items-start justify-between gap-4">

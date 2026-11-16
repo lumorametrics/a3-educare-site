@@ -246,7 +246,7 @@ export default function DistrictDetail({ slug, stateSlug: urlStateSlug }) {
         <CtaBand
           eyebrow="Need guidance?"
           title={toPlainText(fields.cta_heading) || <>Looking for colleges <em>in {title}?</em></>}
-          description={toPlainText(fields.cta_description) || "Explore colleges, courses and admission information with A3 Educare Hub."}
+          description={toPlainText(fields.cta_description) || "Explore colleges, courses and admission information with A3 Educare Hub & Research Academy."}
         />
       </div>
     </main>

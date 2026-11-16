@@ -11,7 +11,7 @@ import { PHONE_DISPLAY, PHONE_HREF } from "../lib/contact";
 
 const CATEGORIES = [
   { key: "student", formTitle: "A3 Student Registration Form", title: "Student Registration", description: "Register to explore courses, admission opportunities and educational guidance.", cta: "Register as Student", Icon: Graduation },
-  { key: "franchise", formTitle: "A3 Franchise Registration Form", title: "Franchise Registration", description: "Apply to become an A3 Educare Hub franchise partner and explore business opportunities.", cta: "Apply for Franchise", Icon: Building },
+  { key: "franchise", formTitle: "A3 Franchise Registration Form", title: "Franchise Registration", description: "Apply to become an A3 Educare Hub & Research Academy franchise partner and explore business opportunities.", cta: "Apply for Franchise", Icon: Building },
   { key: "coordinator", formTitle: "A3 Coordinator Registration Form", title: "Coordinator Registration", description: "Register to join our education coordination network and explore opportunities.", cta: "Register as Coordinator", Icon: Users },
   { key: "placement", formTitle: "A3 Placement Registration Form", title: "Placement Registration", description: "Register for job and placement assistance and explore career opportunities.", cta: "Register for Placement", Icon: Briefcase },
 ];
@@ -29,7 +29,11 @@ export default function Registration() {
   const [pageSettled, setPageSettled] = useState(false);
   const [data, setData] = useState(null); // stays null if WordPress data fails: the forms keep their text fields
   const [dataSettled, setDataSettled] = useState(false);
-  const [openKey, setOpenKey] = useState(null);
+  // `?form=<key>` (e.g. from the header's "Partner With Us" menu) opens that registration form directly.
+  const [openKey, setOpenKey] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("form");
+    return CATEGORIES.some((category) => category.key === requested) ? requested : null;
+  });
 
   useEffect(() => {
     let live = true;
@@ -50,14 +54,14 @@ export default function Registration() {
 
   return (
     <main>
-      <section className="relative isolate overflow-hidden bg-ink-950 text-white">
+      <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-ink-950 text-white md:min-h-[calc(100svh-5rem)]">
         <div aria-hidden="true" className="pointer-events-none absolute -top-40 -right-32 size-[34rem] rounded-full bg-brand-600/30 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-48 -left-32 size-[30rem] rounded-full bg-gold-400/15 blur-3xl" />
-        <div className="shell relative grid grid-cols-1 items-center gap-10 pt-8 pb-16 sm:pb-20 md:grid-cols-[1.25fr_0.75fr] lg:gap-16 lg:pt-14 lg:pb-24">
+        <div className="shell relative grid grid-cols-1 items-center gap-8 pt-6 pb-10 sm:gap-10 sm:pt-8 sm:pb-14 md:grid-cols-[1.25fr_0.75fr] lg:gap-16 lg:py-14">
           <div className="min-w-0">
             <div className="motion-safe:animate-page-in"><Breadcrumb tone="dark" items={[{ label: "Home", href: "/" }, { label: "Registration" }]} /></div>
             <h1 className="text-[2.1rem] leading-[1.08] font-bold tracking-[-0.03em] text-white motion-safe:animate-fade-up min-[375px]:text-[2.4rem] sm:text-5xl lg:text-[3.5rem]">
-              Start Your Journey with <span className="text-brand-300">A3 Educare Hub</span>
+              Start Your Journey with <span className="text-brand-300">A3 Educare Hub & Research Academy</span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/75 motion-safe:animate-fade-up motion-safe:[animation-delay:90ms] sm:text-lg">
               Whether you are a student looking for educational opportunities, interested in becoming a franchise partner, joining our team as a coordinator, or exploring career opportunities, choose your registration category below.
@@ -99,7 +103,7 @@ export default function Registration() {
       <CtaBand
         eyebrow="Need help?"
         title={<>Not sure which <em>one fits?</em></>}
-        description="Talk to an A3 Educare Hub advisor and we will point you to the right registration."
+        description="Talk to an A3 Educare Hub & Research Academy advisor and we will point you to the right registration."
         actionHref="/contact"
       />
 

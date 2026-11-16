@@ -7,7 +7,7 @@ import { ArrowDown, Award, Building, Clock, Graduation, Phone, Shield, Sparkle }
 import { useSeo } from "../lib/seo";
 import { PHONE_DISPLAY, PHONE_HREF } from "../lib/contact";
 
-// Organisation details as supplied by A3 Educare Hub. Nothing here is inferred or added.
+// Organisation details as supplied by A3 Educare Hub & Research Academy. Nothing here is inferred or added.
 const ORGANIZATION = "Puja Social Empowerment Foundation";
 const DIRECTOR = "Er. Ajay Kumar";
 const QUALIFICATIONS = "B.Tech, M.Tech";
@@ -21,7 +21,7 @@ const contactCards = [
 
 const credentials = [
   { Icon: Clock, title: "Working since 2014", text: "Supporting students and families with education guidance." },
-  { Icon: Building, title: ORGANIZATION, text: "The organization operating A3 Educare Hub." },
+  { Icon: Building, title: ORGANIZATION, text: "The organization operating A3 Educare Hub & Research Academy." },
   { Icon: Shield, title: "Section 8(1), Companies Act, 2013", text: "Registered under Section 8(1) of the Companies Act, 2013, as supplied by the organization." },
   { Icon: Building, title: "Ministry of Corporate Affairs", text: "Government of India." },
   { Icon: Sparkle, title: "NITI Aayog", text: "Government of India." },
@@ -33,7 +33,7 @@ const credentials = [
 export default function ContactUs() {
   useSeo({
     title: "Contact Us",
-    description: "Talk to A3 Educare Hub about admissions, courses and career guidance. Call +91 89698 86176 or send us your question.",
+    description: "Talk to A3 Educare Hub & Research Academy about admissions, courses and career guidance. Call +91 89698 86176 or send us your question.",
   });
 
   return (

@@ -1,5 +1,6 @@
 import { toPlainText } from "../lib/text";
 import { withoutPhotoCredit } from "../lib/collegeImage";
+import { getResponsiveImage } from "../lib/media";
 
 const API_BASE = import.meta.env.VITE_WORDPRESS_API ||
   (import.meta.env.DEV ? "/wp-api" : "https://staging.a3educarehub.in/wp-json/wp/v2");
@@ -14,10 +15,10 @@ const STUDY_ABROAD_ENDPOINT = "study-abroad";
 const STUDY_ABROAD_ENDPOINT_ALIASES = ["study_abroad"];
 const responseCache = new Map();
 // WordPress answers every request uncached (Cache-Control: no-store) with 0.7-4 s TTFB, so
-// responses are kept for a few minutes: in memory across client-side navigations, and in
+// responses are kept for a minute: in memory across client-side navigations, and in
 // sessionStorage so a reload or a new tab in the same session renders without waiting.
-// Only public, unauthenticated REST data is stored. Content edits show up within CACHE_TTL.
-const CACHE_TTL = 5 * 60 * 1000;
+// Only public, unauthenticated REST data is stored. Content edits (such as a newly uploaded image) show up within CACHE_TTL.
+const CACHE_TTL = 60 * 1000;
 const STORAGE_PREFIX = "wp-cache:";
 
 function readStored(key) {
@@ -172,7 +173,7 @@ const COURSE_CARD_FIELDS = [
   "acf.featured_image", "acf.image", "acf.thumbnail",
 ].join(",");
 const COLLEGE_CARD_FIELDS = [
-  "id", "slug", "title",
+  "id", "slug", "title", "featured_media",
   "acf.college_location", "acf.location", "acf.city", "acf.state", "acf.college_type", "acf.college_short_introduction",
   "acf.featured_image", "acf.college_image", "acf.course_categories", "acf.college_district",
 ].join(",");
@@ -190,8 +191,24 @@ async function withCourseCategorySlug(items) {
   }));
 }
 
+/**
+ * ACF returns a course's `hero_image` as a bare attachment ID, so a card had no image to show. All the IDs go out in one
+ * `include=` request and each course gets its own media record back. Only the size variants are kept (they feed the card's
+ * srcset; width/height stay out so cards keep cropping with object-cover). A failed lookup leaves the ID, as before.
+ */
+async function withCourseImages(items) {
+  const ids = [...new Set(items.map((item) => item.acf?.hero_image).filter((value) => value && typeof value !== "object" && /^\d+$/.test(String(value))).map(Number))];
+  if (!ids.length) return items;
+  const media = await getMediaByIds(ids).catch(() => []);
+  const byId = new Map(media.map((entry) => [Number(entry.id), { ...entry, media_details: entry.media_details?.sizes ? { sizes: entry.media_details.sizes } : undefined }]));
+  return items.map((item) => {
+    const id = Number(item.acf?.hero_image);
+    return byId.has(id) && typeof item.acf.hero_image !== "object" ? { ...item, acf: { ...item.acf, hero_image: byId.get(id) } } : item;
+  });
+}
+
 export function getCourses(params = {}) {
-  return getCollection("courses", { _fields: COURSE_CARD_FIELDS, _embed: "wp:featuredmedia", ...params }, { all: true }).then(withCourseCategorySlug);
+  return getCollection("courses", { _fields: COURSE_CARD_FIELDS, _embed: "wp:featuredmedia", ...params }, { all: true }).then(withCourseCategorySlug).then(withCourseImages);
 }
 
 export function getCourseBySlug(slug) {
@@ -220,7 +237,10 @@ async function hydrateMediaFields(item, keyPattern) {
   const media = ids.length
     ? await getCollection("media", { include: ids.join(","), per_page: String(ids.length) }).catch(() => [])
     : [];
-  const byId = new Map(media.map((entry) => [String(entry.id), entry]));
+  // Only the size variants are kept (they feed each card's srcset). The original width/height stay out on purpose:
+  // cards have always been cropped to fit (object-cover), and passing the dimensions on would switch portrait photos to
+  // the "show whole image" layout and change how those cards look.
+  const byId = new Map(media.map((entry) => [String(entry.id), { ...entry, media_details: entry.media_details?.sizes ? { sizes: entry.media_details.sizes } : undefined }]));
   const nextFields = { ...fields };
   imageEntries.forEach(([key, value]) => {
     nextFields[key] = byId.get(String(value)) || nextFields[key];
@@ -229,8 +249,20 @@ async function hydrateMediaFields(item, keyPattern) {
   return { ...item, acf: nextFields };
 }
 
+/** A category's `category_hero_image` also arrives as an attachment ID; swap each for its media record in one request. */
+async function withCategoryImages(categories) {
+  const ids = [...new Set(categories.map((category) => category.acf?.category_hero_image).filter((value) => value && typeof value !== "object" && /^\d+$/.test(String(value))).map(Number))];
+  if (!ids.length) return categories;
+  const media = await getMediaByIds(ids).catch(() => []);
+  const byId = new Map(media.map((entry) => [Number(entry.id), entry]));
+  return categories.map((category) => {
+    const entry = byId.get(Number(category.acf?.category_hero_image));
+    return entry && typeof category.acf.category_hero_image !== "object" ? { ...category, acf: { ...category.acf, category_hero_image: entry } } : category;
+  });
+}
+
 export function getCourseCategories() {
-  return getCollection("course_category");
+  return getCollection("course_category").then(withCategoryImages);
 }
 // The state CPT's REST base is "States". The lowercase "states" route resolves to the same posts,
 // but WordPress omits their ACF fields there, so state pages had none of their content.
@@ -276,20 +308,28 @@ export function getDistrictBySlug(slug) {
     .then(async (items) => (items[0] ? [await hydrateMediaFields(items[0], /image/i), ...items.slice(1)] : items));
 }
 
-// Card images: featured_image first, college_image as the fallback (see lib/collegeImage.js).
-const COLLEGE_IMAGE_KEYS = ["featured_image", "college_image"];
-// Description and caption carry the photo credit; only the sizes the cards use are requested.
-const COLLEGE_MEDIA_FIELDS = "id,source_url,alt_text,caption,description,media_details.width,media_details.height,media_details.sizes";
+// Card images: ACF featured_image first, then ACF college_image, then the native WordPress featured image (see
+// lib/collegeImage.js). The native image is copied into acf.featured_media so every view resolves it the same way.
+const COLLEGE_IMAGE_KEYS = ["featured_image", "college_image", "featured_media"];
+// Cards only need the image URLs: no caption/description (the photo credit is shown on the college detail page, which loads
+// its own media record, and on /image-credits). WordPress drops `media_details` entirely when _fields names its children
+// (media_details.sizes, .width ...), so the whole object is requested and trimmed to its size variants below. Without the
+// size variants every card downloaded the original upload.
+const COLLEGE_MEDIA_FIELDS = "id,source_url,alt_text,media_details";
 
-/** Swaps the ACF image IDs of these colleges for their media records (batched, cached). A failure keeps the IDs. */
+/** Swaps the image IDs of these colleges (ACF fields and the native featured image) for their media records (batched, cached). A failure keeps the IDs. */
 async function withCollegeImages(items) {
+  items = items.map((item) => (Number(item.featured_media) > 0 && !item.acf?.featured_media ? { ...item, acf: { ...item.acf, featured_media: item.featured_media } } : item));
   const ids = [...new Set(items.flatMap((item) => COLLEGE_IMAGE_KEYS.map((key) => item.acf?.[key])).filter((value) => /^\d+$/.test(String(value))).map(String))];
   if (!ids.length) return items;
   const chunks = Array.from({ length: Math.ceil(ids.length / 100) }, (_, index) => ids.slice(index * 100, index * 100 + 100));
   const media = (await Promise.all(chunks.map((chunk) => getCollection("media", {
     include: chunk.join(","), per_page: String(chunk.length), _fields: COLLEGE_MEDIA_FIELDS,
   }).catch(() => [])))).flat();
-  const byId = new Map(media.map((entry) => [String(entry.id), entry]));
+  // Only the size variants are kept (they feed each card's srcset). The original width/height stay out on purpose:
+  // cards have always been cropped to fit (object-cover), and passing the dimensions on would switch portrait photos to
+  // the "show whole image" layout and change how those cards look.
+  const byId = new Map(media.map((entry) => [String(entry.id), { ...entry, media_details: entry.media_details?.sizes ? { sizes: entry.media_details.sizes } : undefined }]));
   return items.map((item) => {
     const acf = { ...item.acf };
     COLLEGE_IMAGE_KEYS.forEach((key) => { acf[key] = byId.get(String(acf[key])) || acf[key]; });
@@ -308,7 +348,7 @@ export function getColleges() {
   return getCollection("college", { _fields: COLLEGE_CARD_FIELDS }, { all: true }).then(withCollegeImages);
 }
 
-const COLLEGE_LISTING_FIELDS = `${COLLEGE_CARD_FIELDS},acf.established,acf.entrance_exams,acf.fees_information`;
+const COLLEGE_LISTING_FIELDS = `${COLLEGE_CARD_FIELDS},acf.established,acf.entrance_exams,acf.fees_information,acf.courses_offered,acf.affiliation`;
 
 /** Full card data and images for only the colleges on a page. */
 export async function withCollegeListingDetails(items) {
@@ -426,6 +466,48 @@ export function getMediaByIds(ids) {
   });
 }
 
+/**
+ * The photo of one course category. Each category's courses share one category-specific image in their
+ * `hero_image` field, so the category photo is read from there. Null when no course of the category has one.
+ */
+export async function getCategoryImage(courses, categorySlug) {
+  const id = courses
+    .filter((course) => course.categorySlug === categorySlug)
+    .map((course) => Number(course.acf?.hero_image?.id ?? course.acf?.hero_image))
+    .find((value) => value > 0);
+  if (!id) return null;
+  const [media] = await getMediaByIds([id]).catch(() => []);
+  return media || null;
+}
+
+/**
+ * Content stored on a course category term in WordPress (ACF group "Course Category Content": category_hero_image,
+ * category_introduction, category_description, category_entrance_exams). Empty strings / null when not filled in,
+ * so callers can fall back to the course-based image and the generic text.
+ */
+export function getCategoryContent(category) {
+  const fields = category?.acf && !Array.isArray(category.acf) ? category.acf : {};
+  const text = (value) => String(value || "").trim();
+  return {
+    image: fields.category_hero_image && typeof fields.category_hero_image === "object" ? fields.category_hero_image : null,
+    introduction: text(fields.category_introduction),
+    description: text(fields.category_description),
+    exams: text(fields.category_entrance_exams),
+  };
+}
+
+/** The photo of every course category in one media request: Map of category slug -> media record. */
+export async function getCategoryImages(courses) {
+  const idBySlug = new Map();
+  for (const course of courses) {
+    const id = Number(course.acf?.hero_image?.id ?? course.acf?.hero_image);
+    if (course.categorySlug && id > 0 && !idBySlug.has(course.categorySlug)) idBySlug.set(course.categorySlug, id);
+  }
+  const media = await getMediaByIds([...new Set(idBySlug.values())]).catch(() => []);
+  const byId = new Map(media.map((item) => [Number(item.id), item]));
+  return new Map([...idBySlug].map(([slug, id]) => [slug, byId.get(id)]).filter(([, item]) => item));
+}
+
 // The scholarships CPT's REST base is "Scholarships": like States, the lowercase route omits ACF fields.
 const SCHOLARSHIP_ENDPOINT = "Scholarships";
 const SCHOLARSHIP_CARD_FIELDS = [
@@ -437,7 +519,10 @@ const SCHOLARSHIP_IMAGE_FIELDS = ["category_image", "featured_image"];
 async function withScholarshipImages(items) {
   const ids = items.flatMap((item) => SCHOLARSHIP_IMAGE_FIELDS.map((key) => item.acf?.[key])).filter((value) => /^\d+$/.test(String(value)));
   const media = await getMediaByIds([...new Set(ids)]).catch(() => []);
-  const byId = new Map(media.map((entry) => [String(entry.id), entry]));
+  // Only the size variants are kept (they feed each card's srcset). The original width/height stay out on purpose:
+  // cards have always been cropped to fit (object-cover), and passing the dimensions on would switch portrait photos to
+  // the "show whole image" layout and change how those cards look.
+  const byId = new Map(media.map((entry) => [String(entry.id), { ...entry, media_details: entry.media_details?.sizes ? { sizes: entry.media_details.sizes } : undefined }]));
   return items.map((item) => {
     const acf = { ...item.acf };
     SCHOLARSHIP_IMAGE_FIELDS.forEach((key) => { acf[key] = byId.get(String(acf[key])) || acf[key]; });
@@ -472,6 +557,87 @@ export async function getTermsOfUsePage() {
     const title = page.title?.rendered?.trim().toLowerCase();
     return title === "terms of use" || title === "terms and conditions";
   }) || null;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Testimonials (CPT "testimonials", ACF group "Student Testimonial Information").
+ * WordPress is the single source of truth: only published items are returned by the public REST API,
+ * newest first (orderby=date&order=desc), so a newly published testimonial is always first.
+ * ACF returns IDs for the image, State, District and Course Category fields; they are resolved here with
+ * at most two extra requests (one media batch, one district batch). States and categories reuse the
+ * cached collections the home page already loads.
+ * ---------------------------------------------------------------------------------------------- */
+const TESTIMONIAL_ENDPOINT = "testimonials";
+const TESTIMONIAL_LIMIT = 12;
+const TESTIMONIAL_FIELDS = "id,date,title,featured_media,acf";
+
+const toId = (value) => {
+  const id = Number(Array.isArray(value) ? value[0] : value?.ID ?? value?.id ?? value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+};
+const titleOf = (post) => toPlainText(post?.title?.rendered || post?.name || "");
+
+// A record whose title or student name starts with "DEMO" is test content and is labelled as such on the site.
+const DEMO_PATTERN = /^\s*demo\b/i;
+
+/** Published testimonials, latest first, normalised for display. Items missing a name or quote are left out. */
+export async function getTestimonials() {
+  const items = await getCollection(TESTIMONIAL_ENDPOINT, {
+    orderby: "date",
+    order: "desc",
+    per_page: String(TESTIMONIAL_LIMIT),
+    _fields: TESTIMONIAL_FIELDS,
+  });
+  if (!Array.isArray(items) || !items.length) return [];
+
+  const imageIds = [...new Set(items.map((item) => toId(item.acf?.student_image) || toId(item.featured_media)).filter(Boolean))];
+  const districtIds = [...new Set(items.map((item) => toId(item.acf?.student_district)).filter(Boolean))];
+  const [media, states, districts, categories] = await Promise.all([
+    getMediaByIds(imageIds).catch(() => []),
+    items.some((item) => toId(item.acf?.student_state)) ? getStates().catch(() => []) : [],
+    districtIds.length
+      ? getCollection("Districts", { include: districtIds.join(","), per_page: String(districtIds.length), _fields: "id,title" }).catch(() => [])
+      : [],
+    items.some((item) => toId(item.acf?.course_category)) ? getCourseCategories().catch(() => []) : [],
+  ]);
+  const byId = (list) => new Map(list.map((entry) => [entry.id, entry]));
+  const mediaById = byId(media);
+  const statesById = byId(states);
+  const districtsById = byId(districts);
+  const categoriesById = byId(categories);
+
+  return items
+    .map((item) => {
+      const fields = item.acf || {};
+      const name = toPlainText(fields.student_name || "").trim();
+      const quote = String(fields.testimonial_description || "")
+        .replace(/<[^>]+>/g, "\n")
+        .split(/\n\s*\n/)
+        .map((paragraph) => toPlainText(paragraph).replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+      const photo = mediaById.get(toId(fields.student_image) || toId(item.featured_media));
+      const category = categoriesById.get(toId(fields.course_category));
+      const year = Number(fields.student_year) || null;
+      const rating = Number(fields.rating);
+      return {
+        id: item.id,
+        date: item.date,
+        name,
+        quote,
+        image: photo ? getResponsiveImage(photo, name) : null,
+        category: category ? { name: toPlainText(category.name), slug: category.slug } : null,
+        city: toPlainText(fields.student_city || "").trim(),
+        district: titleOf(districtsById.get(toId(fields.student_district))),
+        state: titleOf(statesById.get(toId(fields.student_state))),
+        course: toPlainText(fields.course_name || "").trim(),
+        college: toPlainText(fields.college_name || "").trim(),
+        year,
+        featured: Boolean(fields.is_featured),
+        rating: Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : null,
+        demo: DEMO_PATTERN.test(name) || DEMO_PATTERN.test(toPlainText(item.title?.rendered || "")),
+      };
+    })
+    .filter((testimonial) => testimonial.name && testimonial.quote.length);
 }
 
 // Embed only what the cards and sidebar use (featured image + categories/tags), not authors/replies.

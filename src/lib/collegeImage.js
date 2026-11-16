@@ -3,7 +3,8 @@ import { toPlainText } from "./text";
 import { CREDIT_OVERRIDES } from "./imageCreditOverrides";
 
 // featured_image is the image chosen for the college; college_image is the older field kept as a fallback.
-const IMAGE_KEYS = ["featured_image", "college_image"];
+// featured_media is the native WordPress featured image (set from the post editor), used only when both ACF fields are empty.
+const IMAGE_KEYS = ["featured_image", "college_image", "featured_media"];
 
 const LICENSE_URLS = [
   [/^CC0/i, () => "https://creativecommons.org/publicdomain/zero/1.0/"],
@@ -75,10 +76,10 @@ export function parseCredit(media) {
 
 /**
  * The image to show for a college: featured_image, else college_image, else null (callers show the
- * placeholder). { src, srcSet, alt, width, height, credit }. Values that are still bare attachment IDs
+ * flagged tile). { src, srcSet, alt, width, height, credit }. Values that are still bare attachment IDs
  * (the media request failed) or empty are skipped.
  */
-export function resolveCollegeImage(fields = {}, fallbackAlt = "") {
+export function resolveOwnCollegeImage(fields = {}, fallbackAlt = "") {
   for (const key of IMAGE_KEYS) {
     const value = fields[key];
     if (typeof value === "string" && /^https?:\/\//.test(value)) return { src: value, alt: fallbackAlt, credit: null };
@@ -93,6 +94,15 @@ export function resolveCollegeImage(fields = {}, fallbackAlt = "") {
     };
   }
   return null;
+}
+
+/**
+ * The image to show for a college: its own photo (ACF featured_image, else college_image, else the native featured image) or null. There is no stand-in
+ * photo: a college without an image record shows a plain frame (see CollegeImage), so no photograph is ever repeated
+ * across colleges or shown on a college it does not belong to.
+ */
+export function resolveCollegeImage(fields = {}, fallbackAlt = "") {
+  return resolveOwnCollegeImage(fields, fallbackAlt);
 }
 
 /** A place photo from an ACF image field as { url, alt, note } for PlaceHero, or null when the field holds no media record. */

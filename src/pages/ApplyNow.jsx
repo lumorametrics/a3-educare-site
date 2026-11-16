@@ -9,7 +9,7 @@ const APPLY_FORM_ID = 3; // [fluentform id="3"], the same form as the Apply Now 
 
 /** /apply-now: the Apply Now form as a page of its own. */
 export default function ApplyNow() {
-  useSeo({ title: "Apply Now", description: "Apply to A3 Educare Hub for admission guidance, course and college selection support." });
+  useSeo({ title: "Apply Now", description: "Apply to A3 Educare Hub & Research Academy for admission guidance, course and college selection support." });
   return (
     <main>
       <PageHero

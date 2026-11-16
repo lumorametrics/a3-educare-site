@@ -1,4 +1,4 @@
-// Contact details supplied by A3 Educare Hub, shared by the Contact page and the WhatsApp button.
+// Contact details supplied by A3 Educare Hub & Research Academy, shared by the Contact page and the WhatsApp button.
 export const PHONE_DISPLAY = "+91 89698 86176";
 export const PHONE_HREF = "tel:+918969886176";
 
@@ -9,3 +9,16 @@ export const WHATSAPP_MESSAGE = "Hello A3 EduCare Hub, I would like to know more
 export function whatsappChatUrl(message = WHATSAPP_MESSAGE) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
+
+export const EMAIL = "hello@a3educarehub.in";
+
+/**
+ * The organisation's public profiles, shown as icons in the footer. Placeholders ("#") for now: replace each with the full profile address.
+ * A profile left empty is not shown. A "#" link stays on the page and does not open a new tab.
+ */
+export const SOCIAL_URLS = {
+  facebook: "#",
+  instagram: "#",
+  linkedin: "#",
+  x: "#",
+};

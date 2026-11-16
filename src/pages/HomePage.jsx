@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
-import CourseCard from "../components/cards/CourseCard";
+import { useEffect, useState } from "react";
 import Reveal from "../components/ui/Reveal";
 import CountUp from "../components/ui/CountUp";
-import SectionHeading from "../components/ui/SectionHeading";
 import FaqAccordion from "../components/ui/FaqAccordion";
 import StatusMessage from "../components/ui/StatusMessage";
-import CtaBand from "../components/ui/CtaBand";
 import FadeImage from "../components/ui/FadeImage";
-import { ArrowRight, ArrowUpRight, Book, Globe, Graduation, MapPin } from "../components/ui/Icons";
+import { ArrowRight, ArrowUpRight, Building, Globe, Graduation, MapFold, Newspaper } from "../components/ui/Icons";
 import HeroSlider from "../components/home/HeroSlider";
 import CollegeSlider from "../components/home/CollegeSlider";
+import AboutIntro from "../components/home/AboutIntro";
+import JourneySection from "../components/home/JourneySection";
+import CourseExplorer from "../components/home/CourseExplorer";
+import { Eyebrow, FinalCta, ServicesSection, WhyChoose } from "../components/home/HomeSections";
+import TestimonialsSection from "../components/home/TestimonialsSection";
+import { HOME_FAQS } from "../components/home/homeContent";
 import {
   getCourseCategories,
   getColleges,
@@ -17,39 +20,40 @@ import {
   getStates,
   getPosts,
   getPostFeaturedImage,
+  getScholarships,
   getStudyAbroad,
 } from "../services/wordpress";
+import { getResponsiveImage } from "../lib/media";
+import { resolveOwnCollegeImage } from "../lib/collegeImage";
 import { toPlainText } from "../lib/text";
-import { withBase } from "../lib/basePath";
-
-const faqs = [
-  ["How do I choose the right course?", "Start with your interests, academic strengths and long-term goals. Our advisors can help you compare eligibility, duration, fees and career outcomes."],
-  ["Can you help me shortlist colleges?", "Yes. We help you compare institutions, locations, courses, fees, facilities and admission requirements so you can shortlist with confidence."],
-  ["Do you provide study-abroad guidance?", "Our guidance covers destination selection, university shortlisting, applications, documentation and visa-related preparation."],
-  ["How much does a consultation cost?", "Your first conversation is complimentary. It is an opportunity to understand your goals and outline your best next steps."],
-];
-
-const categoryTones = [
-  "from-brand-50 to-white text-brand-700",
-  "from-gold-100 to-white text-ink-800",
-  "from-coral-50 to-white text-coral-600",
-  "from-ink-50 to-white text-ink-700",
-];
-
-const POPULAR_CATEGORY_SLUGS = ["engineering", "medical", "nursing", "management", "pharmacy"];
-
-function categoryImage(slug) {
-  return withBase(`/hero/${slug}-1408.webp`);
-}
 
 function stripHtml(value = "") {
   return toPlainText(value);
 }
 
-function SkeletonGrid({ count = 3, className = "h-64" }) {
+function SkeletonGrid({ count = 3, className = "h-64", columns = "sm:grid-cols-2 lg:grid-cols-3" }) {
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+    <div className={`grid grid-cols-1 gap-5 ${columns}`} aria-hidden="true">
       {Array.from({ length: count }, (_, index) => <div key={index} className={`animate-pulse rounded-2xl bg-sand-100 ${className}`} />)}
+    </div>
+  );
+}
+
+/** Section header used by the WordPress-driven sections: eyebrow + h2 on the left, note + link on the right. */
+function SectionIntro({ id, eyebrow, title, description, action, tone = "light" }) {
+  const dark = tone === "dark";
+  return (
+    <div className="mb-10 flex flex-col gap-5 sm:mb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+      <Reveal className="max-w-2xl">
+        <Eyebrow tone={tone}>{eyebrow}</Eyebrow>
+        <h2 id={id} className={`heading-display text-[2rem] leading-[1.08] sm:text-[2.6rem] lg:text-[3.1rem] ${dark ? "text-white [&_em]:text-gold-400" : ""}`}>{title}</h2>
+      </Reveal>
+      {(description || action) && (
+        <Reveal delay={120} className="flex flex-col gap-4 lg:max-w-sm lg:items-end lg:text-right">
+          {description && <p className={dark ? "text-ink-200" : "text-ink-500"}>{description}</p>}
+          {action}
+        </Reveal>
+      )}
     </div>
   );
 }
@@ -63,11 +67,18 @@ const HOME_SOURCES = {
   states: getStates,
   articles: getPosts,
   destinations: getStudyAbroad,
+  scholarships: getScholarships,
 };
 
+/**
+ * Home page, in story order (each section says something no other section says, with its own layout and images):
+ *   hero (approved, unchanged) → at a glance → who we are → how we work → services → streams → why A3 →
+ *   colleges → scholarships → study abroad → founder → news → FAQ → get in touch.
+ * Company copy lives in components/home (see the zero-repetition map in homeContent.js); everything WordPress
+ * publishes is loaded live below, with its own WordPress images.
+ */
 function HomePage() {
   const [data, setData] = useState({});
-  const [activeFilter, setActiveFilter] = useState("All");
   // Which collections failed, so a WordPress outage is reported instead of looking like "no content".
   const [failed, setFailed] = useState({});
   const [attempt, setAttempt] = useState(0);
@@ -89,7 +100,7 @@ function HomePage() {
   }, [attempt]);
 
   const isLoading = (key) => !data[key] && !failed[key];
-  const { courses = [], colleges = [], categories = [], states = [], articles = [], destinations = [] } = data;
+  const { courses = [], colleges = [], categories = [], states = [], articles = [], destinations = [], scholarships = [] } = data;
 
   const retry = () => {
     setFailed({});
@@ -101,59 +112,27 @@ function HomePage() {
     </StatusMessage>
   );
 
-  const popularCategories = useMemo(
-    () => POPULAR_CATEGORY_SLUGS
-      .map((slug) => categories.find((item) => item.slug === slug))
-      .filter(Boolean),
-    [categories],
-  );
-
-  const categoryName = (course) => {
-    const category = categories.find((item) => [].concat(course.course_category || []).map(String).includes(String(item.id)));
-    return category?.name || course.course_category_name || course.category;
-  };
-
-  const popularCourses = useMemo(() => {
-    const selected = courses.filter((course) => {
-      const slug = course.categorySlug || categories.find((item) =>
-        [].concat(course.course_category || []).map(String).includes(String(item.id))
-      )?.slug;
-      return POPULAR_CATEGORY_SLUGS.includes(slug);
-    });
-    if (activeFilter === "All") {
-      return POPULAR_CATEGORY_SLUGS
-        .map((slug) => selected.find((course) => {
-          const category = categories.find((item) =>
-            [].concat(course.course_category || []).map(String).includes(String(item.id))
-          );
-          return (course.categorySlug || category?.slug) === slug;
-        }))
-        .filter(Boolean);
-    }
-    return selected.filter((course) => {
-      const category = categories.find((item) => [].concat(course.course_category || []).map(String).includes(String(item.id)));
-      return category?.slug === activeFilter.toLowerCase();
-    }).slice(0, 6);
-  }, [courses, categories, activeFilter]);
-
-  // The latest eight published college profiles, each with its own featured image.
-  const popularColleges = colleges.slice(0, 8);
-  const categoryCards = categories;
-  const stateCards = states.slice(0, 8);
+  // Eight published college profiles, those with their own campus photo first (stable order otherwise).
+  const popularColleges = [...colleges]
+    .sort((a, b) => Number(!resolveOwnCollegeImage(a.acf || {})) - Number(!resolveOwnCollegeImage(b.acf || {})))
+    .slice(0, 8);
+  const stateLinks = states.slice(0, 10);
   const articleCards = articles.slice(0, 3);
+  const destinationCards = destinations.slice(0, 5);
+  // The only figures on the page. Fixed headline figures have a null key (not tied to a WordPress request).
   const stats = [
-    ["courses", courses.length, "Courses", Graduation],
-    ["categories", categories.length, "Streams", Book],
-    ["states", states.length, "States & UTs", MapPin],
+    [null, 500, "Courses", Graduation],
+    [null, 200, "University", Building],
+    ["states", states.length, "States & UTs", MapFold],
     ["destinations", destinations.length, "Abroad guides", Globe],
   ];
 
   return (
     <main>
-      {/* Hero */}
+      {/* Hero: the approved banner slider. Keep unchanged. */}
       <HeroSlider />
 
-      {/* Live WordPress counts. Always rendered (dash until loaded) so nothing below shifts. */}
+      {/* At a glance. Always rendered (dash until loaded) so nothing below shifts. */}
       <section aria-label="At a glance" className="relative z-20 -mt-10 bg-[linear-gradient(to_bottom,transparent_2.5rem,white_2.5rem)] sm:-mt-14 sm:bg-[linear-gradient(to_bottom,transparent_3.5rem,white_3.5rem)]">
         <div className="shell">
           <dl className="card grid grid-cols-2 gap-x-6 gap-y-6 p-6 sm:grid-cols-4 sm:p-8 lg:divide-x lg:divide-sand-200 lg:p-0">
@@ -165,7 +144,7 @@ function HomePage() {
                   {label}
                 </dt>
                 <dd className="mt-0.5 font-display text-3xl font-semibold text-ink-900">
-                  {isLoading(key) || !count ? <span className="text-ink-300">—</span> : <CountUp value={count} suffix={count >= 100 ? "+" : ""} />}
+                  {(key && isLoading(key)) || !count ? <span className="text-ink-300">—</span> : <CountUp value={count} suffix={count >= 100 ? "+" : ""} />}
                 </dd>
               </div>
             ))}
@@ -173,102 +152,100 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Popular courses */}
-      <section className="section-y bg-white" id="popular-courses">
-        <div className="shell">
-          <SectionHeading eyebrow="Start exploring" title={<>Popular <em>Courses</em></>} description="Frequently explored degree programs across streams." action={<a className="link-arrow" href="/courses">View all courses <ArrowUpRight /></a>} />
-          <div className="mb-10 flex flex-wrap gap-2" role="group" aria-label="Popular course filters">
-            {["All", ...popularCategories.map((category) => category.name)].map((filter) => (
-              <button type="button" aria-pressed={activeFilter === filter} className={`chip shrink-0 ${activeFilter === filter ? "chip-active" : ""}`} key={filter} onClick={() => setActiveFilter(filter)}>{filter}</button>
-            ))}
-          </div>
-          {isLoading("courses") ? <SkeletonGrid count={3} /> : popularCourses.length ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {popularCourses.map((course, index) => {
-                const name = categoryName(course);
-                const slug = course.categorySlug || categories.find((item) =>
-                  [].concat(course.course_category || []).map(String).includes(String(item.id))
-                )?.slug;
-                const category = popularCategories.find((item) => item.slug === slug);
-                return <Reveal key={course.id} delay={(index % 3) * 80} className="h-full"><CourseCard course={course} index={index} categoryName={name} categoryImage={category ? categoryImage(category.slug) : undefined} hideImage /></Reveal>;
-              })}
-            </div>
-          ) : failed.courses ? loadError("Courses") : <StatusMessage>No published courses are available yet.</StatusMessage>}
-        </div>
-      </section>
+      <AboutIntro />
+      <JourneySection />
+      <ServicesSection />
+      <CourseExplorer
+        categories={categories}
+        courses={courses}
+        loadingCategories={isLoading("categories")}
+        loadingCourses={isLoading("courses")}
+        failedCategories={failed.categories}
+        onRetry={retry}
+      />
+      <WhyChoose />
 
-      {/* Popular colleges: real College posts from WordPress, in a scroll-snap slider. */}
-      <section className="section-y pb-0!" id="popular-colleges">
+      {/* Colleges: horizontal slider of WordPress college profiles (their own campus photos) + state shortcuts. */}
+      <section className="bg-white py-20 sm:py-24 lg:py-28" id="popular-colleges" aria-labelledby="colleges-title">
         <div className="shell">
-          <SectionHeading eyebrow="Find your campus" title={<>Popular <em>Colleges</em></>} description="Explore institutions, locations and admission information." action={<a className="link-arrow" href="/colleges">View all colleges <ArrowUpRight /></a>} />
+          <SectionIntro id="colleges-title" eyebrow="Colleges & universities" title={<>Featured <em>colleges.</em></>} description="Campus profiles with facilities, approvals and admission details." action={<a className="link-arrow" href="/colleges">View all colleges <ArrowUpRight /></a>} />
           {isLoading("colleges") ? <SkeletonGrid count={3} className="h-96" /> : popularColleges.length ? (
             <CollegeSlider colleges={popularColleges} />
           ) : failed.colleges ? loadError("Colleges") : <StatusMessage>No published colleges are available yet.</StatusMessage>}
+
+          {(stateLinks.length > 0 || failed.states) && (
+            <Reveal className="mt-12 flex flex-col gap-4 rounded-2xl border border-sand-200 bg-sand-50 p-5 sm:p-6 lg:flex-row lg:items-center lg:gap-8">
+              <p className="shrink-0 font-semibold text-ink-900">Browse colleges by state</p>
+              {failed.states ? (
+                <p className="text-sm text-ink-500">States could not be loaded right now. <button type="button" className="font-medium text-brand-700 underline" onClick={retry}>Try again</button></p>
+              ) : (
+                <ul className="flex flex-wrap gap-2">
+                  {stateLinks.map((state) => (
+                    <li key={state.id}>
+                      <a className="inline-flex rounded-full border border-sand-200 bg-white px-3.5 py-1.5 text-sm text-ink-700 transition-colors hover:border-brand-600 hover:text-brand-700" href={`/states/${state.slug || state.id}`} dangerouslySetInnerHTML={{ __html: state.title?.rendered || state.name }} />
+                    </li>
+                  ))}
+                  <li><a className="inline-flex items-center gap-1 rounded-full bg-ink-900 px-3.5 py-1.5 text-sm text-white transition-colors hover:bg-brand-700" href="/states">All states &amp; UTs <ArrowRight className="size-3.5" /></a></li>
+                </ul>
+              )}
+            </Reveal>
+          )}
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="section-y" id="categories">
+      {/* Scholarships: the WordPress scholarship guides as a two-column list with their own category thumbnails. */}
+      <section className="py-20 sm:py-24 lg:py-28" id="scholarships" aria-labelledby="scholarships-title">
         <div className="shell">
-          <SectionHeading eyebrow="Find your stream" title={<>Explore Course <em>Categories</em></>} description="From first degree to professional specialisation, find a route that fits your ambitions." />
-          {isLoading("categories") ? <SkeletonGrid count={6} className="h-24" /> : categoryCards.length ? (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-              {categoryCards.map((category, index) => (
-                <Reveal key={category.id} delay={(index % 4) * 60}>
-                  <a className={`group flex h-full items-center justify-between gap-3 rounded-2xl border border-sand-200 bg-linear-to-br transition-[translate,box-shadow,border-color] duration-400 ease-(--ease-out-soft) hover:-translate-y-1 hover:border-transparent hover:shadow-lift p-4 min-[400px]:p-5 sm:p-6 ${categoryTones[index % 4]}`} href={`/courses/${encodeURIComponent(category.slug)}`}>
-                    <span className="min-w-0">
-                      <strong className="block font-semibold break-words hyphens-auto text-ink-900">{category.name}</strong>
-                      {category.count > 0 && <span className="text-xs text-ink-400">{category.count} course{category.count === 1 ? "" : "s"}</span>}
-                    </span>
-                    <ArrowRight className="hidden size-5 shrink-0 transition-transform duration-300 group-hover:translate-x-1 min-[400px]:block" />
-                  </a>
-                </Reveal>
-              ))}
-            </div>
-          ) : failed.categories ? loadError("Course categories") : <StatusMessage>No course categories are published yet.</StatusMessage>}
+          <SectionIntro id="scholarships-title" eyebrow="Scholarships" title={<>Funding your education, <em>made simpler.</em></>} description="Read what each type of scholarship covers and where to apply." action={<a className="link-arrow" href="/scholarships">All scholarship guides <ArrowUpRight /></a>} />
+          {isLoading("scholarships") ? <SkeletonGrid count={6} className="h-72" /> : scholarships.length ? (
+            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {scholarships.map((item, index) => {
+                const title = stripHtml(item.title?.rendered);
+                const image = getResponsiveImage(item.acf?.category_image, title) || getResponsiveImage(item.acf?.featured_image, title);
+                const intro = stripHtml(item.acf?.category_intro);
+                return (
+                  <Reveal as="li" key={item.id} delay={(index % 3) * 80} className="h-full">
+                    <a className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-sand-200 bg-white transition-[translate,border-color,box-shadow] duration-400 ease-(--ease-out-soft) hover:-translate-y-1 hover:border-gold-400 hover:shadow-lift" href={`/scholarships/${item.slug || item.id}`}>
+                      <div className="relative aspect-[16/9] overflow-hidden bg-gold-100">
+                        {image && <img src={image.src} srcSet={image.srcSet} sizes="(min-width: 1024px) 26rem, (min-width: 640px) 45vw, 92vw" alt={image.alt} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-[1.1s] ease-(--ease-out-soft) group-hover:scale-105" />}
+                      </div>
+                      <div className="flex flex-1 flex-col p-6">
+                        <h3 className="font-display text-lg font-semibold text-ink-900">{title}</h3>
+                        {intro && <p className="mt-2 line-clamp-2 flex-1 text-sm text-ink-500">{intro}</p>}
+                        <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-900">Read the guide <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" /></span>
+                      </div>
+                    </a>
+                  </Reveal>
+                );
+              })}
+            </ul>
+          ) : failed.scholarships ? loadError("Scholarships") : <StatusMessage>No scholarships are published yet.</StatusMessage>}
         </div>
       </section>
 
-      {/* States */}
-      <section className="section-y bg-white">
+      {/* Study abroad: destination guides with their own university photos, in an editorial mosaic. */}
+      <section className="bg-ink-900 py-20 sm:py-24 lg:py-28" id="study-abroad" aria-labelledby="abroad-title">
         <div className="shell">
-          <SectionHeading eyebrow="Local knowledge, wider choices" title={<>Explore by <em>State</em></>} description="Discover institutions, popular courses and local admission information." action={<a className="link-arrow" href="/states">All states &amp; UTs <ArrowUpRight /></a>} />
-          {isLoading("states") ? <SkeletonGrid count={6} className="h-20" /> : stateCards.length ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {stateCards.map((state, index) => (
-                <Reveal key={state.id} delay={(index % 4) * 60}>
-                  <a className="group flex items-center gap-4 rounded-2xl border border-sand-200 bg-sand-50 p-5 transition-[background-color,border-color,translate] duration-300 hover:-translate-y-0.5 hover:border-ink-900 hover:bg-ink-900" href={`/states/${state.slug || state.id}`}>
-                    <span className="font-display text-sm text-brand-600 transition-colors group-hover:text-gold-400">{String(index + 1).padStart(2, "0")}</span>
-                    <strong className="flex-1 font-semibold text-ink-900 transition-colors group-hover:text-white" dangerouslySetInnerHTML={{ __html: state.title?.rendered || state.name }} />
-                    <ArrowUpRight className="size-4 text-ink-300 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" />
-                  </a>
-                </Reveal>
-              ))}
-            </div>
-          ) : failed.states ? loadError("States") : <StatusMessage>No states are published yet.</StatusMessage>}
-        </div>
-      </section>
-
-      {/* Study abroad */}
-      <section className="section-y relative overflow-hidden bg-ink-900" id="study-abroad">
-        <div aria-hidden="true" className="pointer-events-none absolute -top-40 right-0 size-[30rem] rounded-full bg-brand-600/25 blur-3xl" />
-        <div className="shell relative">
-          <SectionHeading tone="dark" eyebrow="The world is waiting" title={<>Study <em>Abroad</em></>} description="Explore country guides, university options and visa preparation." action={<a className="link-arrow text-white hover:text-gold-400" href="/study-abroad">All destinations <ArrowUpRight /></a>} />
-          {isLoading("destinations") ? <SkeletonGrid count={3} className="h-48 bg-white/5!" /> : destinations.length ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {destinations.map((destination, index) => (
-                <Reveal key={destination.id} delay={(index % 3) * 80} className="h-full">
-                  <a className="group flex h-full flex-col rounded-2xl border border-white/10 bg-white/5 p-7 transition-[translate,background-color,border-color] duration-400 ease-(--ease-out-soft) hover:-translate-y-1 hover:border-gold-400/40 hover:bg-white/10" href={`/study-abroad/${destination.slug || destination.id}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="grid size-12 place-items-center rounded-xl bg-gold-400 font-semibold text-ink-900 transition-transform duration-500 ease-(--ease-out-soft) group-hover:scale-110 group-hover:-rotate-6">{destination.acf?.country_code || <Globe className="size-5" />}</span>
-                      <ArrowUpRight className="size-5 text-ink-300 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-gold-400" />
-                    </div>
-                    <h3 className="mt-8 font-display text-2xl font-semibold text-white" dangerouslySetInnerHTML={{ __html: destination.title?.rendered || destination.acf?.country }} />
-                    <p className="mt-3 line-clamp-3 text-sm text-ink-300">{stripHtml(destination.acf?.intro_description || destination.acf?.country_overview || destination.acf?.description) || "Explore this destination guide."}</p>
-                  </a>
-                </Reveal>
-              ))}
-            </div>
+          <SectionIntro id="abroad-title" tone="dark" eyebrow="Study abroad" title={<>Universities beyond <em>borders.</em></>} description="Country guides covering universities, costs, eligibility and visa preparation." action={<a className="link-arrow text-white hover:text-gold-400" href="/study-abroad">All destinations <ArrowUpRight /></a>} />
+          {isLoading("destinations") ? <SkeletonGrid count={3} className="h-64 bg-white/5!" /> : destinationCards.length ? (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
+              {destinationCards.map((destination, index) => {
+                const title = destination.title?.rendered || destination.acf?.country || "";
+                const image = getResponsiveImage(destination._embedded?.["wp:featuredmedia"]?.[0], stripHtml(title));
+                const lead = index === 0;
+                return (
+                  <Reveal as="li" key={destination.id} delay={(index % 4) * 80} className={lead ? "sm:col-span-2 lg:row-span-2" : ""}>
+                    <a className={`group relative isolate flex h-full flex-col justify-end overflow-hidden rounded-[1.5rem] bg-ink-800 p-6 ring-1 ring-white/10 ${lead ? "min-h-80 sm:p-8 lg:min-h-full" : "min-h-56"}`} href={`/study-abroad/${destination.slug || destination.id}`}>
+                      {image && <img src={image.src} srcSet={image.srcSet} sizes={lead ? "(min-width: 1024px) 40rem, 92vw" : "(min-width: 1024px) 20rem, (min-width: 640px) 45vw, 92vw"} alt={image.alt} loading="lazy" decoding="async" className="absolute inset-0 -z-20 size-full object-cover transition-transform duration-[1.2s] ease-(--ease-out-soft) group-hover:scale-105" />}
+                      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-t from-ink-950/95 via-ink-950/50 to-ink-950/5" />
+                      <span className="absolute top-5 right-5 grid size-10 place-items-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors duration-300 group-hover:bg-gold-400 group-hover:text-ink-900"><ArrowUpRight className="size-4" /></span>
+                      <h3 className={`font-display font-semibold text-white ${lead ? "text-3xl" : "text-xl"}`} dangerouslySetInnerHTML={{ __html: title }} />
+                      {lead && <p className="mt-3 line-clamp-3 max-w-lg text-sm text-white/80">{stripHtml(destination.acf?.intro_description || destination.acf?.country_overview || destination.acf?.description)}</p>}
+                    </a>
+                  </Reveal>
+                );
+              })}
+            </ul>
           ) : (
             <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-white/15 p-8 text-center text-sm text-ink-300">
               {failed.destinations ? "Study-abroad destinations could not be loaded right now." : "Study-abroad destinations are not available yet."}
@@ -278,32 +255,34 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Articles */}
-      <section className="section-y" id="articles">
+      {/* Student success stories (WordPress Testimonials CPT, latest first). Replaces the former founder section. */}
+      <TestimonialsSection />
+
+      {/* News: a featured story beside a compact list of the next posts (WordPress posts and their own images). */}
+      <section className="py-20 sm:py-24 lg:py-28" id="articles" aria-labelledby="articles-title">
         <div className="shell">
-          <SectionHeading eyebrow="Knowledge for your next step" title={<>Latest <em>Articles</em></>} action={<a className="link-arrow" href="/blog">View all articles <ArrowUpRight /></a>} />
+          <SectionIntro id="articles-title" eyebrow="News & admission guides" title={<>Stay ahead of <em>admission season.</em></>} description="Updates, comparisons and step-by-step guides from our education team." action={<a className="link-arrow" href="/blog">View all articles <ArrowUpRight /></a>} />
           {isLoading("articles") ? <SkeletonGrid count={3} className="h-80" /> : articleCards.length ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {articleCards.map((article, index) => {
                 const image = getPostFeaturedImage(article);
                 return (
-                <Reveal key={article.id} delay={index * 80} className="h-full">
-                  <a className="group card-interactive flex h-full flex-col overflow-hidden" href={`/blog/${article.slug || article.id}`}>
-                    <div className={`relative h-44 overflow-hidden bg-linear-to-br ${["from-brand-600 to-ink-900", "from-gold-400 to-coral-500", "from-ink-700 to-brand-800"][index % 3]}`}>
-                      {image ? (
-                        <FadeImage className="size-full" imgClassName="group-hover:scale-105" zoom={false} src={image.url} alt={image.alt} loading="lazy" />
-                      ) : (
-                        <Book className="absolute right-6 bottom-6 size-16 text-white/20 transition-transform duration-700 group-hover:scale-125 group-hover:-rotate-12" />
-                      )}
-                      <span className="absolute top-5 left-5 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-ink-900 shadow-card backdrop-blur">Education guide</span>
-                    </div>
-                    <div className="flex flex-1 flex-col p-6">
-                      <h3 className="font-display text-xl leading-snug font-semibold transition-colors group-hover:text-brand-800" dangerouslySetInnerHTML={{ __html: article.title?.rendered }} />
-                      <p className="mt-3 line-clamp-3 flex-1 text-sm text-ink-500">{stripHtml(article.excerpt?.rendered) || "Read the latest guidance from our education experts."}</p>
-                      <span className="link-arrow mt-5">Read article <ArrowUpRight /></span>
-                    </div>
-                  </a>
-                </Reveal>
+                  <Reveal key={article.id} delay={index * 80} className="h-full">
+                    <a className="group card-interactive flex h-full flex-col overflow-hidden" href={`/blog/${article.slug || article.id}`}>
+                      <div className={`relative h-44 overflow-hidden bg-linear-to-br ${["from-brand-600 to-ink-900", "from-gold-400 to-coral-500", "from-ink-700 to-brand-800"][index % 3]}`}>
+                        {image ? (
+                          <FadeImage className="size-full" imgClassName="group-hover:scale-105" zoom={false} src={image.url} alt={image.alt} loading="lazy" />
+                        ) : (
+                          <Newspaper className="absolute right-6 bottom-6 size-16 text-white/20" />
+                        )}
+                      </div>
+                      <div className="flex flex-1 flex-col p-6">
+                        <h3 className="font-display text-xl leading-snug font-semibold transition-colors group-hover:text-brand-800" dangerouslySetInnerHTML={{ __html: article.title?.rendered }} />
+                        <p className="mt-3 line-clamp-3 flex-1 text-sm text-ink-500">{stripHtml(article.excerpt?.rendered)}</p>
+                        <span className="link-arrow mt-5">Read article <ArrowUpRight /></span>
+                      </div>
+                    </a>
+                  </Reveal>
                 );
               })}
             </div>
@@ -311,20 +290,19 @@ function HomePage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="section-y bg-white" id="faq">
+      {/* FAQ: practical questions that no other section answers. */}
+      <section className="bg-white py-20 sm:py-24 lg:py-28" id="faq" aria-labelledby="faq-title">
         <div className="shell grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-          <div className="lg:sticky lg:top-28 lg:self-start">
-            <SectionHeading eyebrow="Questions, answered" title={<>Frequently Asked <em>Questions</em></>} />
-            <p className="-mt-4 text-ink-500">Still unsure? Our advisors are one conversation away.</p>
-            <a className="btn btn-dark mt-6" href="#contact">Ask an advisor <ArrowUpRight /></a>
-          </div>
-          <Reveal variant="right" delay={100}><FaqAccordion items={faqs.map(([question, answer]) => ({ question, answer }))} defaultOpen={0} numbered /></Reveal>
+          <Reveal className="lg:sticky lg:top-28 lg:self-start">
+            <Eyebrow>Before you get in touch</Eyebrow>
+            <h2 id="faq-title" className="heading-display text-[2rem] leading-[1.08] sm:text-[2.6rem] lg:text-[3.1rem]">Questions families <em>often ask.</em></h2>
+          </Reveal>
+          <Reveal variant="right" delay={100}><FaqAccordion items={HOME_FAQS.map(([question, answer]) => ({ question, answer }))} defaultOpen={0} numbered /></Reveal>
         </div>
       </section>
 
       <div className="pt-20 sm:pt-24">
-        <CtaBand id="contact" eyebrow="Your next chapter starts here" title={<>Not sure where <em>to start?</em></>} description="Get a clear, personalised plan for your education journey." actionLabel="Apply Now" actionHref="mailto:hello@a3educarehub.in" />
+        <FinalCta />
       </div>
     </main>
   );

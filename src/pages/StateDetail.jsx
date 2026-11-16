@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getColleges, getCourseCategories, getDistricts, getStateBySlug, getStates } from "../services/wordpress";
+import { getCategoryContent, getCategoryImages, getColleges, getCourseCategories, getCourses, getDistricts, getStateBySlug, getStates } from "../services/wordpress";
 import SplashScreen from "../components/ui/SplashScreen";
 import PlaceHero from "../components/state/PlaceHero";
 import SectionHeading from "../components/ui/SectionHeading";
@@ -12,7 +12,7 @@ import { toPlainText } from "../lib/text";
 import { useSeo } from "../lib/seo";
 import CollegeImage from "../components/college/CollegeImage";
 
-import { parseCredit, resolveCollegeImage } from "../lib/collegeImage";
+import { getHeroImage, parseCredit, resolveCollegeImage } from "../lib/collegeImage";
 import { districtUrl, stateCategoryUrl } from "../lib/urls";
 
 /** ACF text fields are plain text for most states and HTML for some: always return safe HTML. */
@@ -47,6 +47,8 @@ const CATEGORY_KEYWORDS = [
   [/science|arts|humanities|education|computer/i, "academic", Graduation],
 ];
 
+const CATEGORY_ICONS = { engineering: Building, medical: Shield, paramedical: Shield, nursing: Shield, pharmacy: Sparkle, management: Award, law: Book, agriculture: Globe, diploma: Graduation, academic: Graduation, general: Graduation, professional: Sparkle };
+
 function parseCourseAreas(value) {
   const text = toPlainText(value);
   if (!text.includes(";")) return [];
@@ -78,6 +80,7 @@ export default function StateDetail({ slug }) {
   const [districts, setDistricts] = useState([]);
   const [colleges, setColleges] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [categoryImages, setCategoryImages] = useState(new Map());
   const [showAllDistricts, setShowAllDistricts] = useState(false);
 
   useEffect(() => {
@@ -89,6 +92,7 @@ export default function StateDetail({ slug }) {
     soft(getDistricts(), setDistricts, "districts");
     soft(getColleges(), setColleges, "colleges");
     soft(getCourseCategories(), setCategories, "course categories");
+    getCourses().then(getCategoryImages).then((value) => active && setCategoryImages(value)).catch((requestError) => console.error("Unable to load category images:", requestError));
     getStateBySlug(slug)
       .then((items) => {
         if (!active) return;
@@ -130,8 +134,8 @@ export default function StateDetail({ slug }) {
   ].filter(([, value]) => value);
   const overview = asHtml(fields.state_overview);
   const stateDistricts = districts.filter((item) => sameState(item.acf?.state_name, title)).sort((a, b) => toPlainText(a.title?.rendered).localeCompare(toPlainText(b.title?.rendered)));
-  const categorySlugs = new Set(categories.filter((item) => item.count > 0).map((item) => item.slug));
-  const courseAreas = parseCourseAreas(fields.popular_courses);
+  // Every WordPress course category gets a card on every state page; none depends on the state's popular_courses text.
+  const courseAreas = categories.map((item) => ({ label: toPlainText(item.name), category: item.slug, Icon: CATEGORY_ICONS[item.slug] || Graduation, image: getHeroImage(getCategoryContent(item).image || categoryImages.get(item.slug), toPlainText(item.name)) }));
   const stateColleges = colleges.filter((item) => sameState(item.acf?.state, title));
   const considerations = [
     ["Admissions", fields.admission_overview],
@@ -196,7 +200,7 @@ export default function StateDetail({ slug }) {
         </section>
       )}
 
-      {courseAreas.length === 0 && fields.popular_courses && (
+      {courseAreas.length === 0 && fields.popular_courses && parseCourseAreas(fields.popular_courses).length === 0 && (
         <section className="section-y bg-white">
           <div className="shell">
             <SectionHeading eyebrow="Popular study areas" title={<>Explore by <em>Course Category</em></>} action={<a className="link-arrow" href="/courses">View all courses <ArrowUpRight /></a>} />
@@ -213,15 +217,17 @@ export default function StateDetail({ slug }) {
             <SectionHeading
               eyebrow="Popular study areas"
               title={<>Explore by <em>Course Category</em></>}
-              description={`Programme areas students commonly pursue in ${title}.`}
+              description={`All 12 course categories for ${title}: open one to see its courses and the college profiles we hold for the state.`}
               action={<a className="link-arrow" href="/courses">View all courses <ArrowUpRight /></a>}
             />
             <ul className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {courseAreas.map(({ label, category, Icon }, index) => {
-                const linked = category && categorySlugs.has(category);
+              {courseAreas.map(({ label, category, Icon, image: categoryPhoto }, index) => {
+                const linked = Boolean(category);
                 const content = (
                   <>
-                    <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 transition-colors group-hover:bg-brand-600 group-hover:text-white"><Icon className="size-5" /></span>
+                    {categoryPhoto
+                      ? <img src={categoryPhoto.url} alt="" loading="lazy" decoding="async" className="size-12 shrink-0 rounded-xl object-cover" />
+                      : <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 transition-colors group-hover:bg-brand-600 group-hover:text-white"><Icon className="size-5" /></span>}
                     <span className="min-w-0 flex-1 font-semibold break-words text-ink-900">{label}</span>
                     {linked && <ArrowUpRight className="size-4 shrink-0 text-ink-300 transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-600" />}
                   </>

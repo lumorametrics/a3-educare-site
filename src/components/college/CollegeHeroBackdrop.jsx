@@ -1,20 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
-/** Quiet campus drawing, shown large and faint behind the hero text when a college has no photo. */
+/** Plain branded backdrop for a college without a verified photo; no stand-in photograph is shown. */
 function PlaceholderBackdrop() {
-  return (
-    <div aria-hidden="true" className="absolute inset-0">
-      <div className="absolute inset-0 bg-linear-to-br from-ink-900 via-ink-900 to-brand-700/60" />
-      <svg viewBox="0 0 200 120" preserveAspectRatio="xMaxYMid meet" className="absolute top-1/2 right-[4%] h-[62%] w-auto -translate-y-1/2 text-white/[0.09] max-lg:right-[-10%] max-lg:h-[48%]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M24 106h152" />
-        <path d="M44 106V60h112v46" />
-        <path d="M34 60 100 28l66 32z" />
-        <path d="M66 72v34M86 72v34M114 72v34M134 72v34" />
-        <path d="M92 106V88h16v18" />
-        <circle cx="100" cy="46" r="5" />
-      </svg>
-    </div>
-  );
+  return <div aria-hidden="true" className="absolute inset-0 bg-linear-to-br from-ink-900 via-ink-900 to-brand-700/60" />;
 }
 
 // Keeps the interesting part of the photo in frame once object-cover trims it to a wide hero.
@@ -27,21 +15,22 @@ function focalPoint(image) {
 
 /**
  * Full-bleed college photo for the hero (object-cover), with the readability overlays on top.
- * Without a photo (or if it fails to load) a quiet branded backdrop is shown instead. The photo is
+ * Without a photo (or if it fails to load) a plain branded backdrop is shown instead. The photo is
  * decorative here: the page title names the college, and the photo is credited on /image-credits.
  */
-export default function CollegeHeroBackdrop({ image, onPhotoFailed }) {
+export default function CollegeHeroBackdrop({ image: requested, onPhotoFailed }) {
   const ref = useRef(null);
-  const src = image?.src;
   const [loadedSrc, setLoadedSrc] = useState(null);
-  const [failedSrc, setFailedSrc] = useState(null);
+  const [failed, setFailed] = useState([]);
+  const image = requested;
+  const src = image?.src;
 
   useEffect(() => {
     // A cached image can finish loading before React attaches onLoad.
     if (src && ref.current?.complete && ref.current.naturalWidth) setLoadedSrc(src);
   }, [src]);
 
-  const hasPhoto = src && failedSrc !== src;
+  const hasPhoto = src && !failed.includes(src);
   const loaded = loadedSrc === src;
 
   return (
@@ -58,7 +47,7 @@ export default function CollegeHeroBackdrop({ image, onPhotoFailed }) {
           decoding="async"
           fetchPriority="high"
           onLoad={() => setLoadedSrc(src)}
-          onError={() => { setFailedSrc(src); onPhotoFailed?.(src); }}
+          onError={() => { setFailed((list) => [...list, src]); onPhotoFailed?.(src); }}
           style={{ objectPosition: focalPoint(image) }}
           className={`absolute inset-0 size-full object-cover transition-[opacity,scale] duration-[1400ms] ease-(--ease-out-soft) motion-reduce:transition-none ${loaded ? "scale-100 opacity-100" : "scale-[1.04] opacity-0"}`}
         />
