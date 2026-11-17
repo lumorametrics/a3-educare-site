@@ -70,13 +70,13 @@ export function BrandAmbassadorPanel() {
   return (
     <div className="relative mt-20 sm:mt-24 lg:mt-28" aria-labelledby="brand-ambassador-title" role="group">
       {/* Bridge from Part A: a gold hairline with the A3 mark, so both parts read as one section. */}
-      <div aria-hidden="true" className="mb-8 flex items-center gap-4 sm:mb-10">
+      <Reveal variant="fade" aria-hidden="true" className="mb-8 flex items-center gap-4 sm:mb-10">
         <span className="h-px flex-1 bg-linear-to-r from-transparent to-accent/50" />
         <span className="size-2 rotate-45 bg-accent" />
         <span className="h-px flex-1 bg-linear-to-l from-transparent to-accent/50" />
-      </div>
+      </Reveal>
 
-      <Reveal className="relative isolate overflow-hidden rounded-[2.25rem] bg-ink-950 text-white shadow-[0_40px_80px_-40px_rgb(9_24_41/0.55)] ring-1 ring-accent/25">
+      <Reveal variant="fade" className="relative isolate overflow-hidden rounded-[2.25rem] bg-ink-950 text-white shadow-[0_40px_80px_-40px_rgb(9_24_41/0.55)] ring-1 ring-accent/25">
         {/* One warm light and a faint brand light: depth without decoration. */}
         <div aria-hidden="true" className="pointer-events-none absolute -top-32 -right-24 -z-10 size-[26rem] rounded-full bg-accent/15 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 left-1/4 -z-10 size-[24rem] rounded-full bg-brand-600/20 blur-3xl" />
@@ -101,38 +101,45 @@ export function BrandAmbassadorPanel() {
             </Portrait>
           </div>
 
-          {/* Introduction and designation */}
+          {/* Introduction and designation. Scroll motion as everywhere on the site (and Part A of this section): the
+              heading rises in first, then each element follows on the same stagger (100 / 160 / 300 ms). */}
           <div className="flex min-w-0 flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16 xl:px-16">
-            <p className="eyebrow mb-4 text-gold-400">
-              <span aria-hidden="true" className="h-px w-8 bg-gold-400" />
-              {DESIGNATION}
-            </p>
-            <h3 id="brand-ambassador-title" className="heading-display text-[1.9rem] leading-[1.1] text-white sm:text-[2.4rem] lg:text-[2.75rem] [&_em]:text-gold-400">
-              Meet our <em>Brand Ambassador.</em>
-            </h3>
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-ink-200 sm:text-lg">
-              We are proud to introduce the official Brand Ambassador of {ORGANISATION}: the face of the organisation
-              introduced above, representing the A3 brand, its mission and the commitment we make to every student and
-              family we guide.
-            </p>
+            <Reveal>
+              <p className="eyebrow mb-4 text-gold-400">
+                <span aria-hidden="true" className="h-px w-8 bg-gold-400" />
+                {DESIGNATION}
+              </p>
+              <h3 id="brand-ambassador-title" className="heading-display text-[1.9rem] leading-[1.1] text-white sm:text-[2.4rem] lg:text-[2.75rem] [&_em]:text-gold-400">
+                Meet our <em>Brand Ambassador.</em>
+              </h3>
+            </Reveal>
+            <Reveal delay={100}>
+              <p className="mt-5 max-w-lg text-base leading-relaxed text-ink-200 sm:text-lg">
+                We are proud to introduce the official Brand Ambassador of {ORGANISATION}: the face of the organisation
+                introduced above, representing the A3 brand, its mission and the commitment we make to every student and
+                family we guide.
+              </p>
+            </Reveal>
 
             {/* Official designation, set like a title on a certificate. */}
-            <div className="mt-8 max-w-lg border-l-2 border-accent pl-5 sm:pl-6">
+            <Reveal delay={160} className="mt-8 max-w-lg border-l-2 border-accent pl-5 sm:pl-6">
               <p className="text-xs font-semibold tracking-[0.18em] text-ink-300 uppercase">Official designation</p>
               <p className="mt-2 font-display text-2xl font-semibold text-white sm:text-[1.75rem]">{DESIGNATION}</p>
               <p className="mt-1 text-sm text-gold-400">{ORGANISATION}</p>
-            </div>
+            </Reveal>
 
             {/* To the About page; same pattern as "Discover our story" above, in the panel's gold. */}
-            <a
-              className="group mt-9 inline-flex items-center gap-3 self-start rounded-full bg-gold-400 py-2 pr-2 pl-6 text-sm font-semibold text-ink-950 transition-[background-color,translate] duration-300 hover:-translate-y-0.5 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-400"
-              href="/about"
-            >
-              Learn more about A3 EduCare Hub
-              <span aria-hidden="true" className="grid size-9 place-items-center rounded-full bg-ink-950 text-gold-400 transition-transform duration-300 group-hover:rotate-45">
-                <ArrowUpRight className="size-4" />
-              </span>
-            </a>
+            <Reveal delay={300} className="mt-9 self-start">
+              <a
+                className="group inline-flex items-center gap-3 rounded-full bg-gold-400 py-2 pr-2 pl-6 text-sm font-semibold text-ink-950 transition-[background-color,translate] duration-300 hover:-translate-y-0.5 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-400"
+                href="/about"
+              >
+                Learn more about A3 EduCare Hub
+                <span aria-hidden="true" className="grid size-9 place-items-center rounded-full bg-ink-950 text-gold-400 transition-transform duration-300 group-hover:rotate-45">
+                  <ArrowUpRight className="size-4" />
+                </span>
+              </a>
+            </Reveal>
           </div>
         </div>
       </Reveal>
