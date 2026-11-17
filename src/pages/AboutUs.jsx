@@ -4,6 +4,7 @@ import Reveal from "../components/ui/Reveal";
 import SectionHeading from "../components/ui/SectionHeading";
 import CtaBand from "../components/ui/CtaBand";
 import { SERVICES } from "../components/common/servicesContent";
+import { BrandAmbassadorProfile } from "../components/brand/BrandAmbassador";
 import { FOUNDED_YEAR, MISSION, OFFICES, VISION } from "../components/home/homeContent";
 import {
   ArrowDown,
@@ -477,6 +478,9 @@ export default function AboutUs() {
           </Reveal>
         </div>
       </section>
+
+      {/* Brand Ambassador profile (self-contained section, photo shown here and on the home page). */}
+      <BrandAmbassadorProfile />
 
       {/* Trust & recognition: the certificate photo beside the organisation's registrations. */}
       <section className="section-y bg-white">

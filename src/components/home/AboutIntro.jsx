@@ -2,10 +2,12 @@ import Reveal from "../ui/Reveal";
 import { ArrowUpRight, Eye, Flag, Shield } from "../ui/Icons";
 import { withBase } from "../../lib/basePath";
 import { FOUNDED_YEAR, MISSION, OPERATING_ENTITY, VISION } from "./homeContent";
+import { BrandAmbassadorPanel } from "../brand/BrandAmbassador";
 
 /**
  * About A3: the company introduction (identity, journey since the founding year, mission, vision, operating
- * foundation). Nothing here is repeated by another home page section.
+ * foundation), followed in the same section by the Brand Ambassador panel. Nothing here is repeated by another home
+ * page section.
  *
  * Layout per screen size:
  * - phones: photo first (full square, never cropped) with the foundation card overlapping its lower edge, then text
@@ -101,6 +103,11 @@ export default function AboutIntro() {
             </a>
           </Reveal>
         </div>
+      </div>
+
+      {/* Part two of this section: the Brand Ambassador, under the same heading and background. */}
+      <div className="shell">
+        <BrandAmbassadorPanel />
       </div>
     </section>
   );

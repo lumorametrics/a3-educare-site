@@ -10,7 +10,7 @@ export function whatsappChatUrl(message = WHATSAPP_MESSAGE) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-export const EMAIL = "hello@a3educarehub.in";
+export const EMAIL = "info@a3educarehub.in";
 
 /**
  * The organisation's public profiles, shown as icons in the footer. Placeholders ("#") for now: replace each with the full profile address.
